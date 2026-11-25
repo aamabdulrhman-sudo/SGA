@@ -1,9 +1,4 @@
 #!/bin/sh
-# SGA Platform — container entrypoint
-# 1) Ensures the SQLite database schema exists (prisma db push)
-# 2) Seeds demo data on first run only
-# 3) Starts Next.js production server on 0.0.0.0:3000
-
 set -e
 
 DB_FILE="${DATABASE_URL#file:}"
@@ -13,10 +8,9 @@ echo "▶ SGA Platform — database: ${DB_FILE:-unknown}"
 
 mkdir -p "$(dirname "$DB_FILE")" /app/public/uploads
 
-# 1) Generate Prisma Client & Apply schema
-echo "▶ Generating Prisma client & applying database schema..."
-./node_modules/.bin/prisma generate
-./node_modules/.bin/prisma db push --skip-generate
+# 1) Apply schema (idempotent)
+echo "▶ Applying database schema..."
+npx prisma db push --skip-generate
 
 # 2) Seed demo data on first run only
 if [ ! -f "$SEED_FLAG" ]; then
