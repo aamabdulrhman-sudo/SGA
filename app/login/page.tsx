@@ -22,6 +22,18 @@ export default function LoginPage() {
   );
 }
 
+function SetupRedirect() {
+  useEffect(() => {
+    fetch("/api/health")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.setupCompleted === false) window.location.href = "/setup";
+      })
+      .catch(() => {});
+  }, []);
+  return null;
+}
+
 function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
@@ -102,6 +114,7 @@ function LoginForm() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-navy-800 to-slate-900 flex items-center justify-center p-4">
+      <SetupRedirect />
       <div className="w-full max-w-md">
         <Link href="/" className="flex items-center justify-center gap-2 text-slate-300 hover:text-white mb-6 text-sm">
           <ArrowRight className="h-4 w-4" />

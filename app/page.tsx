@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { setupCompleted } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -10,6 +11,11 @@ export const dynamic = "force-dynamic";
 export default async function LandingPage() {
   const companies = await prisma.company.findMany({ include: { assemblies: true } });
   const needsSetup = !(await setupCompleted());
+
+  // First install: force the setup wizard before anything else
+  if (needsSetup) {
+    redirect("/setup");
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-navy-800 via-navy-800 to-slate-900 text-white">
