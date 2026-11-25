@@ -1,16 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
 import { setupCompleted } from "@/lib/auth";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Building2, ShieldCheck, Vote, FileText, Users, Rocket } from "lucide-react";
-import LogoAvatar from "@/components/logo-avatar";
+import { ShieldCheck, Vote, FileText, Users, Rocket } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function LandingPage() {
-  const companies = await prisma.company.findMany({ include: { assemblies: true } });
   const needsSetup = !(await setupCompleted());
 
   // First install: force the setup wizard before anything else
@@ -34,7 +30,7 @@ export default async function LandingPage() {
           href="/login"
           className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition"
         >
-          دخول المساهمين
+          تسجيل الدخول
         </Link>
       </header>
 
@@ -66,6 +62,10 @@ export default async function LandingPage() {
           منصة متكاملة لإدارة الاجتماعات العامة: سجل المساهمين، اعتماد التوكيلات، احتساب النصاب القانوني
           لحظياً، التصويت على بنود جدول الأعمال، وتصدير المحاضر الرسمية ونتائج التصويت.
         </p>
+        <p className="text-sm text-slate-400 max-w-2xl mx-auto mt-6 bg-white/5 border border-white/10 rounded-xl p-4 leading-7">
+          بوابات الشركات خاصة ومحمية — الدخول متاح للمساهمين والمفوضين ورجال العمل المصرح لهم فقط عبر تسجيل
+          الدخول. لا تُعرض أي بيانات للشركات على هذه الصفحة حفاظاً على سريتها.
+        </p>
 
         <div className="grid md:grid-cols-4 gap-4 mt-12 text-right">
           {[
@@ -80,42 +80,6 @@ export default async function LandingPage() {
               <p className="text-sm text-slate-400 leading-6">{f.d}</p>
             </div>
           ))}
-        </div>
-      </section>
-
-      <section className="max-w-6xl mx-auto px-6 pb-16">
-        <h3 className="font-bold text-xl mb-5 flex items-center gap-2">
-          <Building2 className="h-5 w-5 text-emerald-400" />
-          بوابات الشركات المسجلة
-        </h3>
-        <div className="grid md:grid-cols-3 gap-4">
-          {companies.map((c) => (
-            <Card key={c.id} className="bg-white/5 border-white/10 text-white backdrop-blur">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <LogoAvatar logoUrl={c.logoUrl} name={c.name} themeColor={c.themeColor} size={44} />
-                  <div>
-                    <CardTitle className="text-white">{c.name}</CardTitle>
-                    <CardDescription className="text-slate-400">
-                      س.ت: {c.crNumber} • {c.assemblies.length} جمعية
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Link
-                  href={`/c/${c.slug}`}
-                  className="inline-flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 text-sm font-semibold"
-                >
-                  الدخول لبوابة الشركة
-                  <ArrowLeft className="h-4 w-4" />
-                </Link>
-              </CardContent>
-            </Card>
-          ))}
-          {companies.length === 0 && (
-            <p className="text-slate-400 text-sm">لا توجد شركات مسجلة بعد.</p>
-          )}
         </div>
       </section>
 

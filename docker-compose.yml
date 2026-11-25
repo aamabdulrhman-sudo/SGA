@@ -8,7 +8,7 @@ services:
     environment:
       - DATABASE_URL=file:/app/data/sga.db
       - JWT_SECRET=${JWT_SECRET:-sga-change-me-in-production-9f2c8d4a}
-      - DEMO_MODE=true
+      # ملاحظة: لا تفعّل DEMO_MODE في الإنتاج — يجعل رمز التحقق 1234 مقبولاً للجميع
       - NODE_ENV=production
     volumes:
       - sga_data:/app/data

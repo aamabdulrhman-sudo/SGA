@@ -37,7 +37,9 @@ function SetupRedirect() {
 function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const redirectTo = params.get("redirect");
+  // تعقيم مسار الإعادة: مسار داخلي فقط (يبدأ بـ/ وليس //) لمنع فتح روابط خارجية
+  const rawRedirect = params.get("redirect");
+  const redirectTo = rawRedirect && rawRedirect.startsWith("/") && !rawRedirect.startsWith("//") ? rawRedirect : null;
 
   const [tab, setTab] = useState<"otp" | "staff">("otp");
   const [step, setStep] = useState<"id" | "otp">("id");

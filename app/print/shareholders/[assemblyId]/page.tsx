@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
+import { getSession, isStaff } from "@/lib/auth";
 import PrintButton from "@/components/print-button";
 import { ASSEMBLY_TYPE_LABEL, STATUS_LABEL, formatDateAr, formatWeight } from "@/lib/utils";
 
@@ -10,6 +11,9 @@ export default async function ShareholdersPrintPage({
 }: {
   params: { assemblyId: string };
 }) {
+  const session = await getSession();
+  if (!session || !isStaff(session.role)) notFound();
+
   const assembly = await prisma.assembly.findUnique({
     where: { id: params.assemblyId },
     include: {

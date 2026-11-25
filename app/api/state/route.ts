@@ -12,6 +12,11 @@ export async function GET(req: NextRequest) {
 
   const session = await getSession();
 
+  // لا تُعرض أي بيانات لغير المسجلين
+  if (!session) {
+    return NextResponse.json({ error: "غير مصرح — سجل الدخول أولاً" }, { status: 401 });
+  }
+
   const assembly = await prisma.assembly.findUnique({
     where: { id: assemblyId },
     include: {
@@ -119,6 +124,10 @@ export async function GET(req: NextRequest) {
   };
 
   if (session?.role === "SHAREHOLDER" && session.shareholderId) {
+    // المساهم مقيّد بجلسة جمعيته فقط
+    if (session.assemblyId !== assemblyId) {
+      return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
+    }
     const me = assembly.shareholders.find((s) => s.id === session.shareholderId);
     if (me) {
       const approvedProxy = me.proxiesAsPrincipal.find((p) => p.status === "APPROVED");
@@ -150,6 +159,10 @@ export async function GET(req: NextRequest) {
   }
 
   if (session?.role === "PROXY" && session.proxyIds?.length) {
+    // المفوض مقيّد بجلسة جمعيته فقط
+    if (session.assemblyId !== assemblyId) {
+      return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
+    }
     const myProxies = assembly.proxies.filter(
       (p) => session.proxyIds!.includes(p.id) && p.status === "APPROVED"
     );
@@ -167,7 +180,7 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  if (isStaff(session?.role)) {
+  if (isStaff(session.role)) {
     return NextResponse.json({
       ...base,
       viewer: { role: session!.role },
@@ -222,5 +235,6 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  return NextResponse.json({ ...base, viewer: { role: "GUEST" } });
+  // أي دور آخر (جلسة غير صالحة) مرفوض — لا تسريب بيانات
+  return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
 }
