@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
     container_name: sga-platform
     ports:
-      - "3000:3000"
+      - "8110:3000"
     environment:
       DATABASE_URL: file:/app/data/ga.db
       JWT_SECRET: ${JWT_SECRET:-sga-change-me-in-production-9f2c8d4a}
