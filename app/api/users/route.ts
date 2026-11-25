@@ -1,20 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession, isStaff, logAudit } from "@/lib/auth";
+import { getSession, canManageUsers, logAudit } from "@/lib/auth";
 import bcrypt from "bcryptjs";
 
+/** إدارة الحسابات متاحة لمدير المنصة وأمين السر الرئيسي فقط */
 async function guard() {
   const session = await getSession();
-  if (!session || !isStaff(session.role)) return null;
+  if (!session || !canManageUsers(session.role)) return null;
   return session;
 }
 
-/** List staff accounts — secretary sees secretaries only, manager sees all */
+/** List staff accounts — secretary-general sees secretaries, manager sees all */
 export async function GET() {
   const session = await guard();
   if (!session) return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
 
-  const where = session.role === "PLATFORM_MANAGER" ? {} : { role: "SECRETARY" };
+  const where =
+    session.role === "PLATFORM_MANAGER"
+      ? {}
+      : { role: { in: ["SECRETARY", "SECRETARY_GENERAL"] } };
   const users = await prisma.user.findMany({
     where,
     orderBy: { createdAt: "desc" },
@@ -29,11 +33,13 @@ export async function GET() {
 /** Create a staff account */
 export async function POST(req: NextRequest) {
   const session = await guard();
-  if (!session) return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
+  if (!session) return NextResponse.json({ error: "غير مصرح — إدارة الحسابات متاحة لمدير المنصة وأمين السر الرئيسي فقط" }, { status: 403 });
 
   const { name, username, nationalId, password, role } = await req.json();
 
-  const targetRole = role === "PLATFORM_MANAGER" ? "PLATFORM_MANAGER" : "SECRETARY";
+  const targetRole = ["PLATFORM_MANAGER", "SECRETARY_GENERAL", "SECRETARY"].includes(role)
+    ? role
+    : "SECRETARY";
   if (targetRole === "PLATFORM_MANAGER" && session.role !== "PLATFORM_MANAGER") {
     return NextResponse.json({ error: "إنشاء حسابات مدير المنصة متاح لمدير المنصة فقط" }, { status: 403 });
   }
@@ -63,7 +69,7 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  await logAudit(null, session.name, session.role, "إضافة حساب مستخدم", `${user.name} (${user.username}) — الدور: ${targetRole === "PLATFORM_MANAGER" ? "مدير منصة" : "أمين سر"}`);
+  await logAudit(null, session.name, session.role, "إضافة حساب مستخدم", `${user.name} (${user.username}) — الدور: ${targetRole === "PLATFORM_MANAGER" ? "مدير منصة" : targetRole === "SECRETARY_GENERAL" ? "أمين السر الرئيسي" : "أمين سر"}`);
 
   return NextResponse.json({ ok: true, id: user.id });
 }

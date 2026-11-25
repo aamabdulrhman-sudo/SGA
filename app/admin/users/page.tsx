@@ -1,19 +1,20 @@
-import { getSession, isStaff } from "@/lib/auth";
+import { getSession, canManageUsers } from "@/lib/auth";
 import Link from "next/link";
 import StaffUsersManager from "@/components/staff-users-manager";
 import { ShieldCheck, Users, Settings, Building2 } from "lucide-react";
+import { ROLE_LABEL } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 export default async function UsersPage() {
   const session = await getSession();
-  if (!session || !isStaff(session.role)) {
+  if (!session || !canManageUsers(session.role)) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
         <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 max-w-md text-center">
           <ShieldCheck className="h-12 w-12 mx-auto text-slate-300 mb-3" />
           <h1 className="font-bold text-lg mb-1">إدارة حسابات المستخدمين</h1>
-          <p className="text-sm text-slate-500 mb-5">متاحة لأماني السر ومديري المنصة بعد تسجيل الدخول.</p>
+          <p className="text-sm text-slate-500 mb-5">هذه الصفحة متاحة لمدير المنصة وأمين السر الرئيسي فقط.</p>
           <Link href="/login" className="bg-emerald-600 text-white font-bold px-6 py-2.5 rounded-lg text-sm">
             تسجيل الدخول
           </Link>
@@ -36,7 +37,7 @@ export default async function UsersPage() {
               <h1 className="font-extrabold text-lg">إدارة حسابات المستخدمين وأدوارهم</h1>
               <p className="text-xs text-slate-400">
                 إضافة وإزالة وتعطيل حسابات فريق العمل — {session.name}
-                <span className="mr-2 text-emerald-400 font-bold">{isManager ? "(مدير المنصة)" : "(أمين السر)"}</span>
+                <span className="mr-2 text-emerald-400 font-bold">({ROLE_LABEL[session.role] || session.role})</span>
               </p>
             </div>
           </div>

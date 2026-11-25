@@ -4,8 +4,11 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { STATUS_LABEL, ASSEMBLY_TYPE_LABEL, formatDateAr } from "@/lib/utils";
+import { STATUS_LABEL, ASSEMBLY_TYPE_LABEL, formatDateAr, ROLE_LABEL } from "@/lib/utils";
 import AdminCompanyForm from "@/components/admin-company-form";
+import AdminAssemblyForm from "@/components/admin-assembly-form";
+import AdminCompanyActions from "@/components/admin-company-actions";
+import AdminAssemblyActions from "@/components/admin-assembly-actions";
 import { Building2, ArrowLeft, ShieldCheck, Users, Settings, Home } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -45,7 +48,7 @@ export default async function AdminPage() {
               <h1 className="font-extrabold text-lg">لوحة الإدارة المركزية</h1>
               <p className="text-xs text-slate-400">
                 إدارة الشركات والجمعيات العمومية — {session.name}
-                <Badge className="mr-2 bg-emerald-600">{isManager ? "مدير المنصة" : "أمين السر"}</Badge>
+                <Badge className="mr-2 bg-emerald-600">{ROLE_LABEL[session.role] || session.role}</Badge>
               </p>
             </div>
           </div>
@@ -67,6 +70,7 @@ export default async function AdminPage() {
 
       <div className="max-w-6xl mx-auto px-4 mt-5 space-y-5">
         <AdminCompanyForm />
+        <AdminAssemblyForm companies={companies.map((c) => ({ id: c.id, name: c.name, slug: c.slug }))} />
 
         <div className="grid md:grid-cols-2 gap-5">
           {companies.map((c) => (
@@ -76,8 +80,11 @@ export default async function AdminPage() {
                   <Building2 className="h-5 w-5 text-emerald-600" />
                   {c.name}
                 </CardTitle>
-                <CardDescription>
-                  س.ت: {c.crNumber} • المعرف: <span dir="ltr">{c.slug}</span>
+                <CardDescription className="flex items-center justify-between gap-2">
+                  <span>س.ت: {c.crNumber} • المعرف: <span dir="ltr">{c.slug}</span></span>
+                  <AdminCompanyActions
+                    company={{ id: c.id, name: c.name, slug: c.slug, crNumber: c.crNumber, themeColor: c.themeColor }}
+                  />
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -92,7 +99,10 @@ export default async function AdminPage() {
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-1.5">
-                      <Badge variant={a.status === "ACTIVE" ? "success" : "muted"}>{STATUS_LABEL[a.status]}</Badge>
+                      <div className="flex items-center gap-1.5">
+                        <Badge variant={a.status === "ACTIVE" ? "success" : "muted"}>{STATUS_LABEL[a.status]}</Badge>
+                        <AdminAssemblyActions assemblyId={a.id} assemblyTitle={a.title} status={a.status} />
+                      </div>
                       <Link
                         href={`/c/${c.slug}`}
                         className="text-xs font-bold text-emerald-700 hover:underline flex items-center gap-1"

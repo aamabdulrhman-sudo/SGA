@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession, logAudit } from "@/lib/auth";
+import { getSession, isStaff, logAudit } from "@/lib/auth";
 
 interface StandardPayload {
   agendaItemId: string;
@@ -24,7 +24,7 @@ function getIp(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const session = await getSession();
-  if (!session || session.role === "SECRETARY") {
+  if (!session || isStaff(session.role)) {
     return NextResponse.json({ error: "غير مصرح بالتصويت" }, { status: 403 });
   }
 

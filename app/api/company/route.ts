@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession, logAudit } from "@/lib/auth";
+import { getSession, isStaff, logAudit } from "@/lib/auth";
 
-/** Create / update company (super admin secretary) */
+/** Create company (staff) */
 export async function POST(req: NextRequest) {
   const session = await getSession();
-  if (!session || session.role !== "SECRETARY") {
+  if (!session || !isStaff(session.role)) {
     return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
   }
   const { name, slug, crNumber, themeColor, logoUrl } = await req.json();
@@ -26,6 +26,68 @@ export async function POST(req: NextRequest) {
       logoUrl: logoUrl || null,
     },
   });
-  await logAudit(null, session.name, "SECRETARY", "إنشاء شركة", `${company.name} (${company.slug})`);
+  await logAudit(null, session.name, session.role, "إنشاء شركة", `${company.name} (${company.slug})`);
   return NextResponse.json({ ok: true, slug: company.slug });
+}
+
+/** Update company data (staff) — slug stays immutable to keep /c/[slug] links stable */
+export async function PATCH(req: NextRequest) {
+  const session = await getSession();
+  if (!session || !isStaff(session.role)) {
+    return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
+  }
+  const { companyId, name, crNumber, themeColor, logoUrl } = await req.json();
+  const company = await prisma.company.findUnique({ where: { id: companyId } });
+  if (!company) {
+    return NextResponse.json({ error: "الشركة غير موجودة" }, { status: 404 });
+  }
+  if (!name?.trim() || !crNumber?.trim()) {
+    return NextResponse.json({ error: "الاسم والسجل التجاري مطلوبان" }, { status: 400 });
+  }
+  const data: Record<string, unknown> = {
+    name: name.trim(),
+    crNumber: crNumber.trim(),
+    themeColor: themeColor || company.themeColor,
+    logoUrl: logoUrl?.trim() ? logoUrl.trim() : null,
+  };
+  await prisma.company.update({ where: { id: company.id }, data });
+  await logAudit(
+    null,
+    session.name,
+    session.role,
+    "تعديل بيانات شركة",
+    `الشركة: ${company.name} (${company.slug})`
+  );
+  return NextResponse.json({ ok: true });
+}
+
+/** Delete company (staff) — cascades to its assemblies and all related records */
+export async function DELETE(req: NextRequest) {
+  const session = await getSession();
+  if (!session || !isStaff(session.role)) {
+    return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
+  }
+  const { companyId } = await req.json();
+  const company = await prisma.company.findUnique({
+    where: { id: companyId },
+    include: { _count: { select: { assemblies: true } } },
+  });
+  if (!company) {
+    return NextResponse.json({ error: "الشركة غير موجودة" }, { status: 404 });
+  }
+  if (company._count.assemblies > 0) {
+    return NextResponse.json(
+      { error: `لا يمكن حذف الشركة — تحتوي على ${company._count.assemblies} جمعية. احذف الجمعيات أولاً.` },
+      { status: 400 }
+    );
+  }
+  await prisma.company.delete({ where: { id: company.id } });
+  await logAudit(
+    null,
+    session.name,
+    session.role,
+    "حذف شركة",
+    `الشركة المحذوفة: ${company.name} (${company.slug})`
+  );
+  return NextResponse.json({ ok: true });
 }

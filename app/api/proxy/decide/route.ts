@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession, logAudit } from "@/lib/auth";
+import { getSession, isStaff, logAudit } from "@/lib/auth";
 
-/** Secretary approves or rejects a proxy delegation request */
+/** Staff approves or rejects a proxy delegation request */
 export async function PATCH(req: NextRequest) {
   const session = await getSession();
-  if (!session || session.role !== "SECRETARY") {
-    return NextResponse.json({ error: "هذه العملية متاحة لأمين السر فقط" }, { status: 403 });
+  if (!session || !isStaff(session.role)) {
+    return NextResponse.json({ error: "هذه العملية متاحة لفريق العمل فقط" }, { status: 403 });
   }
 
   const { proxyId, decision, rejectionReason } = await req.json();

@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
   let redirect = "/login";
   const auditAssemblyId: string | null = "assemblyId" in resolved ? (resolved.assemblyId ?? null) : null;
 
-  if (resolved.type === "PLATFORM_MANAGER" || resolved.type === "SECRETARY") {
+  if (resolved.type === "PLATFORM_MANAGER" || resolved.type === "SECRETARY_GENERAL" || resolved.type === "SECRETARY") {
     await createSession({
       role: resolved.type,
       name: resolved.name,

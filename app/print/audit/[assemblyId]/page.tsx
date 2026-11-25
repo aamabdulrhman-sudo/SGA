@@ -38,7 +38,7 @@ export default async function AuditLogPrintPage({
           <p className="text-sm mt-1">{assembly.title}</p>
           <p className="text-xs text-gray-500 mt-2">
             تم إصدار هذا التقرير بتاريخ: {formatDateAr(new Date())} — بواسطة: {session.name} (
-            {session.role === "PLATFORM_MANAGER" ? "مدير المنصة" : "أمين السر"})
+            {ROLE_LABEL[session.role] || session.role})
           </p>
         </div>
 

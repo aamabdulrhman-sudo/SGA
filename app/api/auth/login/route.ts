@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "بيانات الدخول غير صحيحة" }, { status: 401 });
   }
 
-  const role = staff.user.role as "PLATFORM_MANAGER" | "SECRETARY";
+  const role = staff.user.role as "PLATFORM_MANAGER" | "SECRETARY_GENERAL" | "SECRETARY";
   await createSession({
     role,
     name: staff.user.name,

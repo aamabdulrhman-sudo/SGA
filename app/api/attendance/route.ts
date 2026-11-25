@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession, logAudit } from "@/lib/auth";
+import { getSession, isStaff, logAudit } from "@/lib/auth";
 
-/** Toggle / set attendance for a shareholder (secretary) or self (shareholder), or proxy attendance */
+/** Toggle / set attendance for a shareholder (staff) or self (shareholder), or proxy attendance */
 export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
 
   const { shareholderId, present, proxyId } = await req.json();
 
-  if (session.role === "SECRETARY") {
+  if (isStaff(session.role)) {
     const sh = await prisma.shareholder.update({
       where: { id: shareholderId },
       data: { isPresent: present, attendedAt: present ? new Date() : null },
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     await logAudit(
       sh.assemblyId,
       session.name,
-      "SECRETARY",
+      session.role,
       present ? "تسجيل حضور" : "إلغاء حضور",
       `المساهم: ${sh.name} (${sh.sharesCount} سهم)`
     );

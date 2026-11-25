@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession, logAudit } from "@/lib/auth";
+import { getSession, isStaff, logAudit } from "@/lib/auth";
 
-/** Create agenda item (secretary) */
+/** Create agenda item (staff) */
 export async function POST(req: NextRequest) {
   const session = await getSession();
-  if (!session || session.role !== "SECRETARY") {
+  if (!session || !isStaff(session.role)) {
     return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
   }
   const { assemblyId, title, description, votingType, seatsCount } = await req.json();
@@ -28,10 +28,10 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ ok: true, itemId: item.id });
 }
 
-/** Update agenda item status (secretary): DRAFT -> OPEN -> CLOSED */
+/** Update agenda item status (staff): DRAFT -> OPEN -> CLOSED */
 export async function PATCH(req: NextRequest) {
   const session = await getSession();
-  if (!session || session.role !== "SECRETARY") {
+  if (!session || !isStaff(session.role)) {
     return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
   }
   const { itemId, status } = await req.json();

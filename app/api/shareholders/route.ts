@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession, logAudit } from "@/lib/auth";
+import { getSession, isStaff, logAudit } from "@/lib/auth";
 import * as XLSX from "xlsx";
 
-/** Manually add a shareholder (secretary) */
+/** Manually add a shareholder (staff) */
 export async function POST(req: NextRequest) {
   const session = await getSession();
-  if (!session || session.role !== "SECRETARY") {
+  if (!session || !isStaff(session.role)) {
     return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
   }
   const { assemblyId, name, nationalId, mobile, email, sharesCount } = await req.json();
@@ -39,10 +39,10 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ ok: true, id: sh.id });
 }
 
-/** Bulk import from Excel/CSV (secretary) */
+/** Bulk import from Excel/CSV (staff) */
 export async function PUT(req: NextRequest) {
   const session = await getSession();
-  if (!session || session.role !== "SECRETARY") {
+  if (!session || !isStaff(session.role)) {
     return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
   }
   const formData = await req.formData();

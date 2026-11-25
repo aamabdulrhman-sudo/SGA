@@ -9,8 +9,10 @@ const SECRET = new TextEncoder().encode(
 
 export const SESSION_COOKIE = "ga_session";
 
+export type StaffRole = "PLATFORM_MANAGER" | "SECRETARY_GENERAL" | "SECRETARY";
+
 export type SessionData = {
-  role: "PLATFORM_MANAGER" | "SECRETARY" | "SHAREHOLDER" | "PROXY";
+  role: StaffRole | "SHAREHOLDER" | "PROXY";
   name: string;
   identifier: string;
   userId?: string;
@@ -20,8 +22,13 @@ export type SessionData = {
   companyId?: string;
 };
 
-export function isStaff(role?: string) {
-  return role === "SECRETARY" || role === "PLATFORM_MANAGER";
+export function isStaff(role?: string): role is StaffRole | "SHAREHOLDER" | "PROXY" {
+  return role === "SECRETARY" || role === "SECRETARY_GENERAL" || role === "PLATFORM_MANAGER";
+}
+
+/** إدارة الحسابات متاحة لمدير المنصة وأمين السر الرئيسي فقط */
+export function canManageUsers(role?: string) {
+  return role === "PLATFORM_MANAGER" || role === "SECRETARY_GENERAL";
 }
 
 export async function createSession(data: SessionData) {
@@ -80,7 +87,7 @@ export async function resolveIdentifier(identifier: string) {
   const staff = await resolveStaff(clean);
   if (staff && !staff.disabled) {
     return {
-      type: staff.user.role as "PLATFORM_MANAGER" | "SECRETARY",
+      type: staff.user.role as "PLATFORM_MANAGER" | "SECRETARY_GENERAL" | "SECRETARY",
       name: staff.user.name,
       userId: staff.user.id,
     };

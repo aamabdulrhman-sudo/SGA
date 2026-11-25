@@ -71,6 +71,7 @@ export default function StaffUsersManager({
 
   const ROLE_LABEL: Record<string, string> = {
     PLATFORM_MANAGER: "مدير منصة",
+    SECRETARY_GENERAL: "أمين السر الرئيسي",
     SECRETARY: "أمين سر",
   };
 
@@ -93,7 +94,7 @@ export default function StaffUsersManager({
         <CardHeader>
           <CardTitle className="text-base">
             حسابات فريق العمل ({users.length})
-            {!isManager && <Badge variant="info" className="mr-2">تدير حسابات أماني السر فقط</Badge>}
+            {!isManager && <Badge variant="info" className="mr-2">تدير حسابات أماني السر فقط (بدون مديري المنصة)</Badge>}
           </CardTitle>
           <CardDescription>
             الحسابات المعطلة لا تستطيع تسجيل الدخول إطلاقاً — الحساب المُنشأ عبر معالج الإعداد الأولي (مدير المنصة) لا يظهر هنا إلا لمدير المنصة.
@@ -119,8 +120,8 @@ export default function StaffUsersManager({
                   <TableCell dir="ltr">{u.username}</TableCell>
                   <TableCell dir="ltr">{u.nationalId}</TableCell>
                   <TableCell>
-                    <Badge variant={u.role === "PLATFORM_MANAGER" ? "default" : "info"}>
-                      {ROLE_LABEL[u.role]}
+                    <Badge variant={u.role === "PLATFORM_MANAGER" ? "default" : u.role === "SECRETARY_GENERAL" ? "warning" : "info"}>
+                      {ROLE_LABEL[u.role] || u.role}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -217,7 +218,8 @@ export default function StaffUsersManager({
           <div>
             <Label>الدور *</Label>
             <Select name="role" defaultValue="SECRETARY">
-              <option value="SECRETARY">أمين سر (إدارة الشركات والجمعيات وحسابات أماني السر)</option>
+              <option value="SECRETARY">أمين سر (إدارة الشركات والجمعيات)</option>
+              <option value="SECRETARY_GENERAL">أمين السر الرئيسي (إدارة الشركات والجمعيات + الحسابات)</option>
               {isManager && <option value="PLATFORM_MANAGER">مدير منصة (جميع الصلاحيات)</option>}
             </Select>
           </div>

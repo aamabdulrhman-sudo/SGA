@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
+import { getSession, isStaff } from "@/lib/auth";
 import * as XLSX from "xlsx";
 
 export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   const session = await getSession();
-  if (!session || session.role !== "SECRETARY") {
+  if (!session || !isStaff(session.role)) {
     return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
   }
   const assemblyId = req.nextUrl.searchParams.get("assemblyId");
