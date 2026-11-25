@@ -1,35 +1,3 @@
-# ============================================================
-# منصة إدارة الجمعيات العمومية وتصويت المساهمين — SGA Platform
-# Multi-stage Docker build (Next.js 14 + Prisma + SQLite)
-# ============================================================
-
-FROM node:20-alpine AS base
-RUN apk add --no-cache libc6-compat openssl
-WORKDIR /app
-
-# ---------- Stage 1: dependencies ----------
-FROM base AS deps
-COPY package.json package-lock.json ./
-RUN npm ci
-
-# ---------- Stage 2: build ----------
-FROM base AS builder
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-ENV NEXT_TELEMETRY_DISABLED=1
-# Generate Prisma client for the build machine (linux-musl)
-RUN ./node_modules/.bin/prisma generate
-# Compile the TypeScript seed script to plain JS (no tsx needed at runtime)
-RUN ./node_modules/.bin/tsc prisma/seed.ts \
-    --outDir prisma/dist \
-    --module commonjs \
-    --target ES2017 \
-    --moduleResolution node \
-    --esModuleInterop \
-    --skipLibCheck
-# Production build
-RUN npm run build
-
 # ---------- Stage 3: runtime ----------
 FROM base AS runner
 ENV NODE_ENV=production \
@@ -47,11 +15,12 @@ COPY --from=builder /app/next.config.mjs ./next.config.mjs
 COPY --from=builder /app/tailwind.config.ts ./tailwind.config.ts
 COPY --from=builder /app/tsconfig.json ./tsconfig.json
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
-RUN chmod +x ./docker-entrypoint.sh
+RUN chmod +x ./docker-entrypoint.sh \
+    && ./node_modules/.bin/prisma generate
 
 # Persistent data dirs (mounted as volumes in docker-compose)
 RUN mkdir -p /app/data /app/public/uploads \
-    && chown -R node:node /app/data /app/public/uploads /app/.next
+    && chown -R node:node /app/data /app/public/uploads /app/.next /app/node_modules
 VOLUME ["/app/data", "/app/public/uploads"]
 
 USER node
