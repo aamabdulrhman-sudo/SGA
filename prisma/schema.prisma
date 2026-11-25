@@ -1,0 +1,129 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id         String     @id @default(cuid())
+  name       String
+  slug       String     @unique
+  crNumber   String
+  logoUrl    String?
+  themeColor String     @default("#0F172A")
+  createdAt  DateTime   @default(now())
+  assemblies Assembly[]
+}
+
+model Assembly {
+  id               String      @id @default(cuid())
+  companyId        String
+  company          Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  title            String
+  type             String      @default("ORDINARY") // ORDINARY | EXTRAORDINARY
+  status           String      @default("DRAFT") // DRAFT | ACTIVE | CLOSED
+  scheduledAt      DateTime
+  streamUrl        String?
+  quorumPercentage Int         @default(50)
+  agendaItems      AgendaItem[]
+  shareholders     Shareholder[]
+  proxies          Proxy[]
+  auditLogs        AuditLog[]
+  createdAt        DateTime    @default(now())
+}
+
+model Shareholder {
+  id             String    @id @default(cuid())
+  assemblyId     String
+  assembly       Assembly  @relation(fields: [assemblyId], references: [id], onDelete: Cascade)
+  name           String
+  nationalId     String
+  mobile         String?
+  email          String?
+  sharesCount    Int
+  isPresent      Boolean   @default(false)
+  attendedAt     DateTime?
+  votes          Vote[]
+  proxiesAsPrincipal Proxy[]
+}
+
+model Proxy {
+  id              String   @id @default(cuid())
+  assemblyId      String
+  assembly        Assembly @relation(fields: [assemblyId], references: [id], onDelete: Cascade)
+  shareholderId   String
+  shareholder     Shareholder @relation(fields: [shareholderId], references: [id], onDelete: Cascade)
+  proxyName       String
+  proxyNationalId String
+  proxyMobile     String?
+  proxyEmail      String?
+  documentUrl     String?
+  status          String   @default("PENDING") // PENDING | APPROVED | REJECTED | REVOKED
+  rejectionReason String?
+  approvedBy      String?
+  approvedAt      DateTime?
+  createdAt       DateTime @default(now())
+  proxyAttended   Boolean  @default(false)
+  proxyAttendedAt DateTime?
+  votes           Vote[]
+}
+
+model AgendaItem {
+  id          String   @id @default(cuid())
+  assemblyId  String
+  assembly    Assembly @relation(fields: [assemblyId], references: [id], onDelete: Cascade)
+  orderIndex  Int
+  title       String
+  description String?
+  votingType  String   @default("STANDARD") // STANDARD | CUMULATIVE
+  seatsCount  Int?
+  status      String   @default("DRAFT") // DRAFT | OPEN | CLOSED
+  votes       Vote[]
+}
+
+model Vote {
+  id            String      @id @default(cuid())
+  agendaItemId  String
+  agendaItem    AgendaItem  @relation(fields: [agendaItemId], references: [id], onDelete: Cascade)
+  shareholderId String
+  shareholder   Shareholder @relation(fields: [shareholderId], references: [id], onDelete: Cascade)
+  castByRole    String // SHAREHOLDER | PROXY
+  proxyId       String?
+  proxy         Proxy?      @relation(fields: [proxyId], references: [id])
+  choice        String // APPROVE | REJECT | ABSTAIN | candidate name (cumulative)
+  sharesWeight  Int
+  ipAddress     String?
+  createdAt     DateTime    @default(now())
+}
+
+model AuditLog {
+  id         String    @id @default(cuid())
+  assemblyId String?
+  assembly   Assembly? @relation(fields: [assemblyId], references: [id], onDelete: Cascade)
+  actorName  String
+  actorRole  String
+  action     String
+  details    String?
+  ipAddress  String?
+  timestamp  DateTime  @default(now())
+}
+
+model OtpCode {
+  id         String   @id @default(cuid())
+  identifier String
+  code       String
+  expiresAt  DateTime
+  used       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
+model AdminUser {
+  id           String @id @default(cuid())
+  username     String @unique
+  passwordHash String
+  name         String
+  nationalId   String @unique
+}

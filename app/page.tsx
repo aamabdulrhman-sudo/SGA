@@ -1,101 +1,97 @@
-import Image from "next/image";
+import Link from "next/link";
+import { prisma } from "@/lib/prisma";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Building2, ShieldCheck, Vote, FileText, Users } from "lucide-react";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function LandingPage() {
+  const companies = await prisma.company.findMany({ include: { assemblies: true } });
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <main className="min-h-screen bg-gradient-to-b from-navy-800 via-navy-800 to-slate-900 text-white">
+      <header className="max-w-6xl mx-auto px-6 pt-8 pb-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-xl bg-emerald-600 flex items-center justify-center">
+            <ShieldCheck className="h-6 w-6" />
+          </div>
+          <div>
+            <h1 className="font-bold text-lg leading-tight">منصة الجمعيات العمومية</h1>
+            <p className="text-xs text-slate-400">نظام حوكمة المساهمات والتصويت الإلكتروني</p>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+        <Link
+          href="/login"
+          className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition"
         >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+          دخول المساهمين
+        </Link>
+      </header>
+
+      <section className="max-w-6xl mx-auto px-6 py-14 text-center">
+        <Badge className="bg-emerald-600/20 text-emerald-300 border border-emerald-600/30 mb-5">
+          منصة سعودية متوافقة مع متطلبات الحوكمة
+        </Badge>
+        <h2 className="text-4xl md:text-5xl font-extrabold leading-snug mb-5">
+          إدارة الجمعيات العامة وتصويت المساهمين
+          <span className="block text-emerald-400 mt-2">بشفافية وأمان واحتساب مرجّح بالأسهم</span>
+        </h2>
+        <p className="text-slate-300 max-w-2xl mx-auto leading-8">
+          منصة متكاملة لإدارة الاجتماعات العامة: سجل المساهمين، اعتماد التوكيلات، احتساب النصاب القانوني
+          لحظياً، التصويت على بنود جدول الأعمال، وتصدير المحاضر الرسمية ونتائج التصويت.
+        </p>
+
+        <div className="grid md:grid-cols-4 gap-4 mt-12 text-right">
+          {[
+            { icon: Users, t: "سجل المساهمين", d: "استيراد Excel أو إدخال يدوي مع احتساب أوزان التصويت تلقائياً" },
+            { icon: FileText, t: "اعتماد التوكيلات", d: "رفع مستندات الوكالة واعتمادها من أمين السر مع قفل التصويت المزدوج" },
+            { icon: Vote, t: "تصويت مرجّح بالأسهم", d: "تصويت اعتيادي وتراكمي (انتخاب مجلس الإدارة) بأوزان دقيقة" },
+            { icon: ShieldCheck, t: "نصاب لحظي وسجل تدقيق", d: "مؤشر النصاب القانوني الحي وسجل تدقيق كامل لكل عملية" },
+          ].map((f) => (
+            <div key={f.t} className="bg-white/5 border border-white/10 rounded-xl p-5 backdrop-blur">
+              <f.icon className="h-7 w-7 text-emerald-400 mb-3" />
+              <h3 className="font-bold mb-1.5">{f.t}</h3>
+              <p className="text-sm text-slate-400 leading-6">{f.d}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="max-w-6xl mx-auto px-6 pb-16">
+        <h3 className="font-bold text-xl mb-5 flex items-center gap-2">
+          <Building2 className="h-5 w-5 text-emerald-400" />
+          بوابات الشركات المسجلة
+        </h3>
+        <div className="grid md:grid-cols-3 gap-4">
+          {companies.map((c) => (
+            <Card key={c.id} className="bg-white/5 border-white/10 text-white backdrop-blur">
+              <CardHeader>
+                <CardTitle className="text-white">{c.name}</CardTitle>
+                <CardDescription className="text-slate-400">
+                  س.ت: {c.crNumber} • {c.assemblies.length} جمعية
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link
+                  href={`/c/${c.slug}`}
+                  className="inline-flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 text-sm font-semibold"
+                >
+                  الدخول لبوابة الشركة
+                  <ArrowLeft className="h-4 w-4" />
+                </Link>
+              </CardContent>
+            </Card>
+          ))}
+          {companies.length === 0 && (
+            <p className="text-slate-400 text-sm">لا توجد شركات مسجلة بعد.</p>
+          )}
+        </div>
+      </section>
+
+      <footer className="border-t border-white/10 py-6 text-center text-sm text-slate-500">
+        منصة إدارة الجمعيات العمومية وتصويت المساهمين — جميع العمليات مسجلة في سجل تدقيق غير قابل للتعديل
       </footer>
-    </div>
+    </main>
   );
 }

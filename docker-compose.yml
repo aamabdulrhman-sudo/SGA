@@ -1,0 +1,27 @@
+services:
+  sga:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sga-platform
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: file:/app/data/ga.db
+      JWT_SECRET: ${JWT_SECRET:-sga-change-me-in-production-9f2c8d4a}
+      DEMO_MODE: ${DEMO_MODE:-true}
+      NODE_ENV: production
+    volumes:
+      - sga-data:/app/data
+      - sga-uploads:/app/public/uploads
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  sga-data:
+  sga-uploads:

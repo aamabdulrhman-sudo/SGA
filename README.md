@@ -1,36 +1,97 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SGA — منصة إدارة الجمعيات العمومية وتصويت المساهمين
 
-## Getting Started
+منصة متكاملة متعددة المستأجرين (Multi-Tenant) لإدارة الجمعيات العامة للشركات: سجل المساهمين، اعتماد التوكيلات، النصاب القانوني اللحظي، التصويت المرجّح بالأسهم (اعتيادي + تراكمي)، وتصدير كشوف الحضور والنتائج والمحاضر الرسمية — بواجهة عربية RTL بالكامل.
 
-First, run the development server:
+## التقنيات
+
+- **Next.js 14 (App Router) + TypeScript**
+- **Tailwind CSS** — خط Cairo، تصميم مؤسسي (Navy `#0F172A` / Emerald `#059669`)
+- **Prisma ORM + SQLite** — قاعدة بيانات ملفية بدون أي خدمات خارجية
+- **Auth مخصص** — دخول برقم الهوية + OTP (وضع تجريبي: الرمز `1234`)
+- **SheetJS (xlsx)** — استيراد/تصدير سجل المساهمين وكشوف التصويت
+- **تحديث لحظي** — Polling كل 4 ثوانٍ للنصاب والنتائج
+- **طباعة PDF** — صفحة محضر رسمية جاهزة للطباعة
+
+## التشغيل عبر Docker (الموصى به)
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone git@github.com:aamabdulrhman-sudo/SGA.git
+cd SGA
+docker compose up -d --build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+ثم افتح: **http://<server-ip>:3000**
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+عند أول تشغيل يقوم الحاوية تلقائياً بـ:
+1. إنشاء مخطط قاعدة البيانات (`prisma db push`)
+2. زرع البيانات التجريبية (شركة الأفق القابضة + 3 مساهمين + 4 بنود + توكيلات)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+قواعد البيانات والملفات المرفوعة تُحفظ في volumes دائمة (`sga-data`, `sga-uploads`) فلن تُفقد عند إعادة البناء.
 
-## Learn More
+### متغيرات البيئة (اختيارية)
 
-To learn more about Next.js, take a look at the following resources:
+| المتغير | الافتراضي | الوصف |
+|---|---|---|
+| `JWT_SECRET` | قيمة افتراضية | مفتاح تشفير الجلسات — **غيّره في الإنتاج** |
+| `DEMO_MODE` | `true` | `false` لإخفاء مبدّل الأدوار وإظهار OTP حقيقي |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## التشغيل بدون Docker
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm install
+npm run setup     # prisma db push + generate + seed
+npm run build
+npm run start -- -p 3000 -H 0.0.0.0
+```
 
-## Deploy on Vercel
+## حسابات التجربة (OTP = `1234`)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| الدور | رقم الهوية | ملاحظات |
+|---|---|---|
+| أمين السر | `9000000001` | غرفة التحكم + اعتماد التوكيلات |
+| مساهم 1 — عبدالرحمن (45%) | `1010101010` | 450,000 سهم |
+| مساهم 2 — سارة (30%) | `1020202020` | توكيلها معتمد لخالد |
+| مفوض معتمد — خالد | `1050505050` | يصوّت بالوكالة عن سارة |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+يوجد زر **"تبديل الدور"** عائم (أسفل يسار الشاشة) في وضع التجربة للتبديل الفوري بين الأدوار.
+
+## هيكل المشروع
+
+```
+SGA/
+├── prisma/
+│   ├── schema.prisma          # 9 جداول (شركات، جمعيات، مساهمون، توكيلات، بنود، أصوات، تدقيق...)
+│   └── seed.ts                # البيانات التجريبية
+├── app/
+│   ├── api/                   # auth (OTP/demo), state (polling), vote, attendance,
+│   │                          # proxy, agenda, assembly, shareholders (import), upload, exports
+│   ├── login/                 # دخول OTP
+│   ├── admin/                 # لوحة الإدارة المركزية (إدارة الشركات والجمعيات)
+│   ├── c/[slug]/              # بوابة الشركة المعزولة (Multi-Tenant) — توجيه حسب الدور
+│   └── print/minutes/[id]/    # محضر الجمعية الرسمي (طباعة PDF)
+├── components/
+│   ├── ui/                    # مكونات shadcn-style
+│   ├── rooms/                 # غرفة التحكم + بوابة المساهم + بوابة المفوض
+│   ├── demo-switcher.tsx      # مبدّل الأدوار التجريبي
+│   └── quorum-meter.tsx       # مؤشر النصاب القانوني اللحظي
+├── lib/                       # auth (JWT) + prisma + polling hook + utils
+├── Dockerfile                 # بناء متعدد المراحل (init تلقائي للقاعدة + seed)
+├── docker-compose.yml         # volumes دائمة + healthcheck
+└── docker-entrypoint.sh       # db push + seed (أول مرة فقط) + تشغيل الخادم
+```
+
+## الأدوار والصلاحيات
+
+| الدور | القدرات |
+|---|---|
+| **أمين السر** | إدارة الشركات والجمعيات، استيراد سجل المساهمين، اعتماد/رفض التوكيلات (مع سبب)، فتح/غلق التصويت لكل بند، مؤشر النصاب اللحظي، تصدير Excel والمحضر الرسمي، سجل تدقيق كامل |
+| **المساهم** | عرض أسهمه ووزنه، تسجيل الحضور، البث المباشر، التصويت المرجّح، إضافة مفوض مع رفع مستند التوكيل ومتابعة الحالة والإلغاء |
+| **المفوض** | عرض جميع الموكلين والأسهم المجمّعة، تسجيل حضور بالوكالة، التصويت نيابةً عنهم (فردي أو جماعي) |
+
+## قواعد العمل المطبقة
+
+- منع التصويت المزدوج: صوت واحد لكل مساهم لكل بند (أصالة أو وكالة — لا الاثنين)
+- عند اعتماد التوكيل: يُقفل التصويت المباشر للمساهم الأصلي ويُولَّد حساب دخول للمفوض تلقائياً
+- النصاب الفعلي = أسهم الحاضرين أصالة + أسهم الموكلين وكالة (بدون ازدواجية)
+- التصويت التراكمي: رصيد كل مساهم = (أسهمه × عدد المقاعد) ويجب توزيعه كاملاً
+- كل عملية موثقة في سجل التدقيق (المنفذ، الدور، الوقت، IP)
