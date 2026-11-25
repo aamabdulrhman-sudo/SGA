@@ -13,9 +13,10 @@ echo "▶ SGA Platform — database: ${DB_FILE:-unknown}"
 
 mkdir -p "$(dirname "$DB_FILE")" /app/public/uploads
 
-# 1) Apply schema (idempotent)
-echo "▶ Applying database schema..."
-npx prisma db push --skip-generate
+# 1) Generate Prisma Client & Apply schema
+echo "▶ Generating Prisma client & applying database schema..."
+./node_modules/.bin/prisma generate
+./node_modules/.bin/prisma db push --skip-generate
 
 # 2) Seed demo data on first run only
 if [ ! -f "$SEED_FLAG" ]; then
