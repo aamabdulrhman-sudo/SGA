@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import DemoSwitcher from "@/components/demo-switcher";
 
 export const metadata: Metadata = {
   title: "منصة الجمعيات العمومية | نظم حوكمة المساهمين",
@@ -22,7 +21,6 @@ export default function RootLayout({
       </head>
       <body className="bg-slate-100 text-navy-800 font-arabic antialiased">
         {children}
-        <DemoSwitcher />
       </body>
     </html>
   );

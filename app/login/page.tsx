@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ShieldCheck, KeyRound, ArrowRight } from "lucide-react";
+import { ShieldCheck, KeyRound, ArrowRight, UserCog, Smartphone } from "lucide-react";
 
 export default function LoginPage() {
   return (
@@ -27,12 +27,16 @@ function LoginForm() {
   const params = useSearchParams();
   const redirectTo = params.get("redirect");
 
+  const [tab, setTab] = useState<"otp" | "staff">("otp");
   const [step, setStep] = useState<"id" | "otp">("id");
   const [identifier, setIdentifier] = useState("");
   const [code, setCode] = useState("");
-  const [demoCode, setDemoCode] = useState<string | null>(null);
+  const [sentVia, setSentVia] = useState<string | null>(null);
   const [roleName, setRoleName] = useState("");
+  const [staffUser, setStaffUser] = useState("");
+  const [staffPass, setStaffPass] = useState("");
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
   const [loading, setLoading] = useState(false);
   const otpRef = useRef<HTMLInputElement>(null);
 
@@ -42,6 +46,7 @@ function LoginForm() {
 
   async function requestCode() {
     setError("");
+    setInfo("");
     if (!identifier.trim()) return setError("الرجاء إدخال رقم الهوية أو السجل التجاري");
     setLoading(true);
     try {
@@ -52,7 +57,7 @@ function LoginForm() {
       });
       const data = await res.json();
       if (!res.ok) return setError(data.error || "خطأ في الطلب");
-      setDemoCode(data.demoCode || null);
+      setSentVia(data.demoCode ? "DEMO" : data.sentVia?.join(", ") || null);
       setRoleName(data.name || "");
       setStep("otp");
     } finally {
@@ -77,6 +82,24 @@ function LoginForm() {
     }
   }
 
+  async function staffLogin() {
+    setError("");
+    if (!staffUser.trim() || !staffPass) return setError("أدخل اسم المستخدم وكلمة المرور");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identifier: staffUser, password: staffPass }),
+      });
+      const data = await res.json();
+      if (!res.ok) return setError(data.error || "بيانات غير صحيحة");
+      router.push(redirectTo && redirectTo.startsWith("/admin") ? redirectTo : data.redirect || "/admin");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-navy-800 to-slate-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -90,17 +113,55 @@ function LoginForm() {
             <div className="w-14 h-14 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center mb-2">
               <ShieldCheck className="h-7 w-7 text-emerald-600" />
             </div>
-            <CardTitle className="text-xl">
-              {step === "id" ? "تسجيل الدخول" : "رمز التحقق"}
-            </CardTitle>
+            <CardTitle className="text-xl">تسجيل الدخول</CardTitle>
             <CardDescription>
-              {step === "id"
-                ? "أدخل رقم الهوية الوطنية أو السجل التجاري المسجل لديك"
-                : `مرحباً ${roleName} — أدخل رمز التحقق المرسل إليك`}
+              {tab === "otp"
+                ? "للمساهمين والمفوضين — برقم الهوية ورمز التحقق"
+                : "لأماني السر ومديري المنصة — باسم المستخدم وكلمة المرور"}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {step === "id" ? (
+            {/* Tabs */}
+            <div className="grid grid-cols-2 gap-1 bg-slate-100 rounded-lg p-1 mb-5">
+              <button
+                onClick={() => { setTab("otp"); setError(""); setInfo(""); }}
+                className={`flex items-center justify-center gap-1.5 rounded-md py-2 text-sm font-bold transition cursor-pointer ${tab === "otp" ? "bg-white shadow text-emerald-700" : "text-slate-500"}`}
+              >
+                <Smartphone className="h-4 w-4" />
+                رمز التحقق (OTP)
+              </button>
+              <button
+                onClick={() => { setTab("staff"); setError(""); setInfo(""); setStep("id"); }}
+                className={`flex items-center justify-center gap-1.5 rounded-md py-2 text-sm font-bold transition cursor-pointer ${tab === "staff" ? "bg-white shadow text-emerald-700" : "text-slate-500"}`}
+              >
+                <UserCog className="h-4 w-4" />
+                فريق العمل
+              </button>
+            </div>
+
+            {tab === "staff" ? (
+              <div className="space-y-4">
+                <Input
+                  dir="ltr"
+                  placeholder="اسم المستخدم أو رقم الهوية"
+                  value={staffUser}
+                  onChange={(e) => setStaffUser(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && staffLogin()}
+                />
+                <Input
+                  dir="ltr"
+                  type="password"
+                  placeholder="كلمة المرور"
+                  value={staffPass}
+                  onChange={(e) => setStaffPass(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && staffLogin()}
+                />
+                {error && <p className="text-red-600 text-sm text-center">{error}</p>}
+                <Button className="w-full bg-emerald-600 hover:bg-emerald-700" onClick={staffLogin} disabled={loading}>
+                  {loading ? "جارٍ الدخول..." : "دخول"}
+                </Button>
+              </div>
+            ) : step === "id" ? (
               <div className="space-y-4">
                 <Input
                   dir="ltr"
@@ -116,25 +177,21 @@ function LoginForm() {
                   <KeyRound className="h-4 w-4" />
                   {loading ? "جارٍ الإرسال..." : "إرسال رمز التحقق"}
                 </Button>
-                <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-xs text-blue-800 leading-5">
-                  <strong>حسابات تجريبية:</strong>
-                  <br />• أمين السر: <span dir="ltr">9000000001</span>
-                  <br />• مساهم (عبدالرحمن 45%): <span dir="ltr">1010101010</span>
-                  <br />• مساهم (سارة 30%): <span dir="ltr">1020202020</span>
-                  <br />• مفوض معتمد (خالد): <span dir="ltr">1050505050</span>
-                </div>
               </div>
             ) : (
               <div className="space-y-4">
-                {demoCode && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-900 text-center">
-                    <strong>وضع التجربة (محاكاة SMS):</strong>
-                    <div className="text-2xl font-extrabold tracking-[0.5em] mt-1" dir="ltr">
-                      {demoCode}
-                    </div>
-                    أو استخدم الرمز الشامل <strong dir="ltr">1234</strong>
-                  </div>
-                )}
+                <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-sm text-blue-900 text-center">
+                  {sentVia === "DEMO" ? (
+                    <>
+                      <strong>وضع التجربة (لم تُهيأ بوابة رسائل):</strong>
+                      <div className="text-2xl font-extrabold tracking-[0.5em] mt-1" dir="ltr">
+                        استخدم 1234
+                      </div>
+                    </>
+                  ) : (
+                    <>تم إرسال رمز التحقق إلى {roleName} عبر: <strong>{sentVia}</strong></>
+                  )}
+                </div>
                 <Input
                   ref={otpRef}
                   dir="ltr"
@@ -150,7 +207,7 @@ function LoginForm() {
                   {loading ? "جارٍ التحقق..." : "تحقق ودخول"}
                 </Button>
                 <button
-                  onClick={() => { setStep("id"); setCode(""); setError(""); }}
+                  onClick={() => { setStep("id"); setCode(""); setError(""); setSentVia(null); }}
                   className="text-sm text-slate-500 hover:text-navy-800 w-full text-center cursor-pointer"
                 >
                   تغيير رقم الهوية

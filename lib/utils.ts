@@ -46,6 +46,7 @@ export const CHOICE_LABEL: Record<string, string> = {
 };
 
 export const ROLE_LABEL: Record<string, string> = {
+  PLATFORM_MANAGER: "مدير المنصة",
   SECRETARY: "أمين السر",
   SHAREHOLDER: "مساهم",
   PROXY: "مفوض",

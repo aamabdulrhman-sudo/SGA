@@ -136,6 +136,11 @@ export default function SecretaryRoom({
                   <Printer className="h-4 w-4" /> محضر رسمي PDF
                 </Button>
               </a>
+              <a href={`/print/audit/${assemblyId}`} target="_blank">
+                <Button size="sm" variant="outline" className="bg-transparent text-white border-white/30 hover:bg-white/10">
+                  <History className="h-4 w-4" /> سجل التدقيق PDF
+                </Button>
+              </a>
             </div>
           </div>
         </div>

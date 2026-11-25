@@ -10,14 +10,19 @@ const SECRET = new TextEncoder().encode(
 export const SESSION_COOKIE = "ga_session";
 
 export type SessionData = {
-  role: "SECRETARY" | "SHAREHOLDER" | "PROXY";
+  role: "PLATFORM_MANAGER" | "SECRETARY" | "SHAREHOLDER" | "PROXY";
   name: string;
-  identifier: string; // national id used to login
+  identifier: string;
+  userId?: string;
   shareholderId?: string;
   proxyIds?: string[];
   assemblyId?: string;
   companyId?: string;
 };
+
+export function isStaff(role?: string) {
+  return role === "SECRETARY" || role === "PLATFORM_MANAGER";
+}
 
 export async function createSession(data: SessionData) {
   const token = await new SignJWT(data)
@@ -51,17 +56,34 @@ export async function destroySession() {
   cookieStore.delete(SESSION_COOKIE);
 }
 
-/** Resolve identifier -> role + context */
+/** True once the first-run platform manager account exists (setup wizard locked). */
+export async function setupCompleted() {
+  const count = await prisma.user.count({ where: { role: "PLATFORM_MANAGER" } });
+  return count > 0;
+}
+
+/** Resolve an identifier (username / national id) -> staff account */
+export async function resolveStaff(identifier: string) {
+  const clean = identifier.trim();
+  const user = await prisma.user.findFirst({
+    where: { OR: [{ username: clean }, { nationalId: clean }] },
+  });
+  if (!user) return null;
+  if (!user.isActive) return { user, disabled: true };
+  return { user, disabled: false };
+}
+
+/** Resolve an identifier -> role + context (staff / shareholder / proxy) */
 export async function resolveIdentifier(identifier: string) {
   const clean = identifier.trim();
 
-  const admin = await prisma.adminUser.findFirst({
-    where: {
-      OR: [{ username: clean }, { nationalId: clean }],
-    },
-  });
-  if (admin) {
-    return { type: "SECRETARY" as const, name: admin.name, adminId: admin.id };
+  const staff = await resolveStaff(clean);
+  if (staff && !staff.disabled) {
+    return {
+      type: staff.user.role as "PLATFORM_MANAGER" | "SECRETARY",
+      name: staff.user.name,
+      userId: staff.user.id,
+    };
   }
 
   const shareholder = await prisma.shareholder.findFirst({

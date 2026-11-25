@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { resolveIdentifier, createSession } from "@/lib/auth";
+import { resolveIdentifier, resolveStaff, createSession, logAudit } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   const { identifier, code } = await req.json();
@@ -10,6 +10,11 @@ export async function POST(req: NextRequest) {
 
   const clean = identifier.trim();
   const demo = process.env.DEMO_MODE === "true";
+
+  const staff = await resolveStaff(clean);
+  if (staff?.disabled) {
+    return NextResponse.json({ error: "هذا الحساب معطل — راجع مدير المنصة" }, { status: 403 });
+  }
 
   if (!demo || code !== "1234") {
     const otp = await prisma.otpCode.findFirst({
@@ -32,20 +37,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "الحساب غير موجود" }, { status: 404 });
   }
 
-  if (resolved.type === "SECRETARY") {
+  let redirect = "/login";
+  const auditAssemblyId: string | null = "assemblyId" in resolved ? (resolved.assemblyId ?? null) : null;
+
+  if (resolved.type === "PLATFORM_MANAGER" || resolved.type === "SECRETARY") {
     await createSession({
-      role: "SECRETARY",
+      role: resolved.type,
       name: resolved.name,
       identifier: clean,
+      userId: resolved.userId,
     });
-    await prisma.auditLog.create({
-      data: {
-        actorName: resolved.name,
-        actorRole: "SECRETARY",
-        action: "تسجيل دخول",
-        details: "دخول أمين السر إلى النظام",
-      },
-    });
+    await logAudit(null, resolved.name, resolved.type, "تسجيل دخول", "دخول فريق العمل عبر رمز التحقق");
+    redirect = "/admin";
   } else if (resolved.type === "SHAREHOLDER") {
     await createSession({
       role: "SHAREHOLDER",
@@ -55,15 +58,13 @@ export async function POST(req: NextRequest) {
       assemblyId: resolved.assemblyId,
       companyId: resolved.companyId,
     });
-    await prisma.auditLog.create({
-      data: {
-        assemblyId: resolved.assemblyId,
-        actorName: resolved.name,
-        actorRole: "SHAREHOLDER",
-        action: "تسجيل دخول مساهم",
-        details: `دخول عبر الهوية: ${clean}`,
-      },
-    });
+    await logAudit(
+      auditAssemblyId,
+      resolved.name,
+      "SHAREHOLDER",
+      "تسجيل دخول مساهم",
+      `دخول عبر الهوية: ${clean}`
+    );
   } else {
     await createSession({
       role: "PROXY",
@@ -73,27 +74,19 @@ export async function POST(req: NextRequest) {
       assemblyId: resolved.assemblyId,
       companyId: resolved.companyId,
     });
-    await prisma.auditLog.create({
-      data: {
-        assemblyId: resolved.assemblyId,
-        actorName: resolved.name,
-        actorRole: "PROXY",
-        action: "تسجيل دخول مفوض",
-        details: `دخول المفوض عبر الهوية: ${clean}`,
-      },
-    });
+    await logAudit(
+      auditAssemblyId,
+      resolved.name,
+      "PROXY",
+      "تسجيل دخول مفوض",
+      `دخول المفوض عبر الهوية: ${clean}`
+    );
   }
 
-  // redirect target based on company slug
-  let slug = "alofoq";
   if (resolved.companyId) {
     const company = await prisma.company.findUnique({ where: { id: resolved.companyId } });
-    if (company) slug = company.slug;
+    if (company) redirect = `/c/${company.slug}`;
   }
 
-  return NextResponse.json({
-    ok: true,
-    role: resolved.type,
-    redirect: `/c/${slug}`,
-  });
+  return NextResponse.json({ ok: true, role: resolved.type, redirect });
 }

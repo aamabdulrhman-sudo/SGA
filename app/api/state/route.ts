@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
+import { getSession, isStaff } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -167,10 +167,10 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  if (session?.role === "SECRETARY") {
+  if (isStaff(session?.role)) {
     return NextResponse.json({
       ...base,
-      viewer: { role: "SECRETARY" },
+      viewer: { role: session!.role },
       shareholders: assembly.shareholders
         .map((s) => ({
           id: s.id,

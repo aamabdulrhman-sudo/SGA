@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
+import { getSession, isStaff } from "@/lib/auth";
 import SecretaryRoom from "@/components/rooms/secretary-room";
 import ShareholderRoom from "@/components/rooms/shareholder-room";
 import ProxyRoom from "@/components/rooms/proxy-room";
@@ -37,7 +37,7 @@ export default async function CompanyPortal({
 
   const totalShares = activeAssembly.shareholders.reduce((a, s) => a + s.sharesCount, 0);
 
-  if (session?.role === "SECRETARY") {
+  if (isStaff(session?.role)) {
     return <SecretaryRoom assemblyId={activeAssembly.id} companyName={company.name} />;
   }
   if (session?.role === "SHAREHOLDER" && session.shareholderId) {

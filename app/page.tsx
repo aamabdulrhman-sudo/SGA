@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { setupCompleted } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Building2, ShieldCheck, Vote, FileText, Users } from "lucide-react";
+import { ArrowLeft, Building2, ShieldCheck, Vote, FileText, Users, Rocket } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function LandingPage() {
   const companies = await prisma.company.findMany({ include: { assemblies: true } });
+  const needsSetup = !(await setupCompleted());
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-navy-800 via-navy-800 to-slate-900 text-white">
@@ -30,6 +32,22 @@ export default async function LandingPage() {
       </header>
 
       <section className="max-w-6xl mx-auto px-6 py-14 text-center">
+        {needsSetup && (
+          <Link
+            href="/setup"
+            className="block max-w-2xl mx-auto mb-8 bg-emerald-600 hover:bg-emerald-700 transition rounded-xl p-5 text-right"
+          >
+            <div className="flex items-center gap-3">
+              <Rocket className="h-8 w-8 shrink-0" />
+              <div>
+                <div className="font-extrabold text-lg">الإعداد الأولي — أنشئ حساب مدير المنصة</div>
+                <div className="text-sm text-emerald-100 mt-0.5">
+                  هذه خطوة أول تثبيت إلزامية لتفعيل النظام. تُقفل الصفحة نهائياً بعد إنشاء الحساب.
+                </div>
+              </div>
+            </div>
+          </Link>
+        )}
         <Badge className="bg-emerald-600/20 text-emerald-300 border border-emerald-600/30 mb-5">
           منصة سعودية متوافقة مع متطلبات الحوكمة
         </Badge>

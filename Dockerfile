@@ -12,14 +12,9 @@ RUN npm ci
 
 COPY . .
 
+# No demo data is seeded — the first-run setup wizard (/setup) creates the
+# platform manager account from the browser after the first boot.
 RUN ./node_modules/.bin/prisma generate && \
-    ./node_modules/.bin/tsc prisma/seed.ts \
-      --outDir prisma/dist \
-      --module commonjs \
-      --target ES2017 \
-      --moduleResolution node \
-      --esModuleInterop \
-      --skipLibCheck && \
     NODE_ENV=production npm run build && \
     chmod +x ./docker-entrypoint.sh && \
     mkdir -p /app/data /app/public/uploads && \

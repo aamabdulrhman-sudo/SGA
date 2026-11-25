@@ -120,10 +120,20 @@ model OtpCode {
   createdAt  DateTime @default(now())
 }
 
-model AdminUser {
-  id           String @id @default(cuid())
-  username     String @unique
-  passwordHash String
+// Staff accounts: PLATFORM_MANAGER | SECRETARY
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
   name         String
-  nationalId   String @unique
+  nationalId   String   @unique
+  passwordHash String
+  role         String // PLATFORM_MANAGER | SECRETARY
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+}
+
+// Key-value settings store (notification gateways: SMS / Email / WhatsApp)
+model Setting {
+  key   String @id
+  value String
 }
