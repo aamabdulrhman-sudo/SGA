@@ -1,24 +1,27 @@
 import Link from "next/link";
-import { Building2, LogIn } from "lucide-react";
+import { LogIn } from "lucide-react";
 import { formatWeight } from "@/lib/utils";
+import LogoAvatar from "@/components/logo-avatar";
 
 export default function GuestView({
   companySlug,
   companyName,
   assemblyTitle,
   totalShares,
+  logoUrl,
+  themeColor,
 }: {
   companySlug: string;
   companyName: string;
   assemblyTitle: string;
   totalShares: number;
+  logoUrl?: string | null;
+  themeColor?: string | null;
 }) {
   return (
     <main className="min-h-screen bg-slate-100 flex items-center justify-center p-6">
       <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-200 p-8 text-center">
-        <div className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center mb-4" style={{ backgroundColor: "#0F172A" }}>
-          <Building2 className="h-8 w-8 text-white" />
-        </div>
+        <LogoAvatar logoUrl={logoUrl} name={companyName} themeColor={themeColor} size={64} className="mx-auto mb-4" />
         <h1 className="text-2xl font-extrabold mb-1">{companyName}</h1>
         <p className="text-slate-500 mb-6">{assemblyTitle}</p>
 

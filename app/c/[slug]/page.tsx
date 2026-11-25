@@ -36,15 +36,16 @@ export default async function CompanyPortal({
   }
 
   const totalShares = activeAssembly.shareholders.reduce((a, s) => a + s.sharesCount, 0);
+  const logoProps = { logoUrl: company.logoUrl, themeColor: company.themeColor };
 
   if (isStaff(session?.role)) {
-    return <SecretaryRoom assemblyId={activeAssembly.id} companyName={company.name} />;
+    return <SecretaryRoom assemblyId={activeAssembly.id} companyName={company.name} {...logoProps} />;
   }
   if (session?.role === "SHAREHOLDER" && session.shareholderId) {
-    return <ShareholderRoom assemblyId={activeAssembly.id} companyName={company.name} />;
+    return <ShareholderRoom assemblyId={activeAssembly.id} companyName={company.name} {...logoProps} />;
   }
   if (session?.role === "PROXY") {
-    return <ProxyRoom assemblyId={activeAssembly.id} companyName={company.name} />;
+    return <ProxyRoom assemblyId={activeAssembly.id} companyName={company.name} {...logoProps} />;
   }
   return (
     <GuestView
@@ -52,6 +53,7 @@ export default async function CompanyPortal({
       companyName={company.name}
       assemblyTitle={activeAssembly.title}
       totalShares={totalShares}
+      {...logoProps}
     />
   );
 }

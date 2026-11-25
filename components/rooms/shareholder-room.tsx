@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Dialog } from "@/components/ui/dialog";
 import { STATUS_LABEL, CHOICE_LABEL, ASSEMBLY_TYPE_LABEL, formatDateAr, formatWeight } from "@/lib/utils";
+import LogoAvatar from "@/components/logo-avatar";
 import {
   MonitorPlay, BadgeCheck, Lock, Send, UserPlus, Trash2, FileText, CheckCircle2,
   XCircle, Clock, Users, Upload, Check, X,
@@ -18,9 +19,13 @@ import {
 export default function ShareholderRoom({
   assemblyId,
   companyName,
+  logoUrl,
+  themeColor,
 }: {
   assemblyId: string;
   companyName: string;
+  logoUrl?: string | null;
+  themeColor?: string | null;
 }) {
   const { state, refresh } = useAssemblyState(assemblyId);
   const [busy, setBusy] = useState(false);
@@ -107,12 +112,15 @@ export default function ShareholderRoom({
       {/* Header */}
       <header className="bg-navy-800 text-white">
         <div className="max-w-5xl mx-auto px-4 py-5 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div className="text-xs text-slate-400 mb-1">{companyName}</div>
-            <h1 className="font-extrabold text-lg">{assembly.title}</h1>
-            <div className="flex items-center gap-2 mt-1.5">
-              <Badge className="bg-emerald-600">{ASSEMBLY_TYPE_LABEL[assembly.type]}</Badge>
-              <span className="text-xs text-slate-300">{formatDateAr(assembly.scheduledAt)}</span>
+          <div className="flex items-center gap-3">
+            <LogoAvatar logoUrl={logoUrl} name={companyName} themeColor={themeColor} size={44} />
+            <div>
+              <div className="text-xs text-slate-400 mb-1">{companyName}</div>
+              <h1 className="font-extrabold text-lg">{assembly.title}</h1>
+              <div className="flex items-center gap-2 mt-1.5">
+                <Badge className="bg-emerald-600">{ASSEMBLY_TYPE_LABEL[assembly.type]}</Badge>
+                <span className="text-xs text-slate-300">{formatDateAr(assembly.scheduledAt)}</span>
+              </div>
             </div>
           </div>
           <div className="text-left">

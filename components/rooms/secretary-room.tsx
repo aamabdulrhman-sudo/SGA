@@ -13,6 +13,7 @@ import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from "@/components/ui/table";
 import { STATUS_LABEL, CHOICE_LABEL, ASSEMBLY_TYPE_LABEL, formatDateAr, formatWeight, ROLE_LABEL } from "@/lib/utils";
+import LogoAvatar from "@/components/logo-avatar";
 import {
   Gauge, Radio, PlayCircle, Lock, Upload, FileSpreadsheet, Printer, History,
   UserPlus, CheckCircle2, XCircle, Clock, Download, Activity, Users, FileText, Building,
@@ -29,9 +30,13 @@ const TABS = [
 export default function SecretaryRoom({
   assemblyId,
   companyName,
+  logoUrl,
+  themeColor,
 }: {
   assemblyId: string;
   companyName: string;
+  logoUrl?: string | null;
+  themeColor?: string | null;
 }) {
   const { state, refresh } = useAssemblyState(assemblyId);
   const [tab, setTab] = useState("overview");
@@ -96,18 +101,21 @@ export default function SecretaryRoom({
       <header className="bg-navy-800 text-white">
         <div className="max-w-6xl mx-auto px-4 py-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <div className="flex items-center gap-2 text-xs text-slate-400 mb-1">
-                <Radio className="h-3.5 w-3.5 text-red-400 animate-pulse" />
-                غرفة التحكم المباشر — {companyName}
-              </div>
-              <h1 className="font-extrabold text-lg">{assembly.title}</h1>
-              <div className="flex items-center gap-2 mt-1.5">
-                <Badge className="bg-emerald-600">{ASSEMBLY_TYPE_LABEL[assembly.type]}</Badge>
-                <span className="text-xs text-slate-300">{formatDateAr(assembly.scheduledAt)}</span>
-                <Badge variant={assembly.status === "ACTIVE" ? "success" : "muted"}>
-                  {STATUS_LABEL[assembly.status]}
-                </Badge>
+            <div className="flex items-center gap-3">
+              <LogoAvatar logoUrl={logoUrl} name={companyName} themeColor={themeColor} size={48} />
+              <div>
+                <div className="flex items-center gap-2 text-xs text-slate-400 mb-1">
+                  <Radio className="h-3.5 w-3.5 text-red-400 animate-pulse" />
+                  غرفة التحكم المباشر — {companyName}
+                </div>
+                <h1 className="font-extrabold text-lg">{assembly.title}</h1>
+                <div className="flex items-center gap-2 mt-1.5">
+                  <Badge className="bg-emerald-600">{ASSEMBLY_TYPE_LABEL[assembly.type]}</Badge>
+                  <span className="text-xs text-slate-300">{formatDateAr(assembly.scheduledAt)}</span>
+                  <Badge variant={assembly.status === "ACTIVE" ? "success" : "muted"}>
+                    {STATUS_LABEL[assembly.status]}
+                  </Badge>
+                </div>
               </div>
             </div>
             <div className="flex gap-2">
@@ -124,6 +132,11 @@ export default function SecretaryRoom({
               <a href={`/api/export/attendance?assemblyId=${assemblyId}`} download>
                 <Button size="sm" variant="outline" className="bg-transparent text-white border-white/30 hover:bg-white/10">
                   <FileSpreadsheet className="h-4 w-4" /> كشف الحضور Excel
+                </Button>
+              </a>
+              <a href={`/print/shareholders/${assemblyId}`} target="_blank">
+                <Button size="sm" variant="outline" className="bg-transparent text-white border-white/30 hover:bg-white/10">
+                  <Printer className="h-4 w-4" /> كشف المساهمين PDF
                 </Button>
               </a>
               <a href={`/api/export/results?assemblyId=${assemblyId}`} download>
@@ -455,6 +468,11 @@ export default function SecretaryRoom({
               <a href="/template-cap-table.xlsx" download>
                 <Button variant="outline">
                   <Download className="h-4 w-4" /> نموذج الاستيراد
+                </Button>
+              </a>
+              <a href={`/print/shareholders/${assemblyId}`} target="_blank">
+                <Button variant="outline">
+                  <Printer className="h-4 w-4" /> استخراج الكشف PDF
                 </Button>
               </a>
             </div>

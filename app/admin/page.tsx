@@ -9,6 +9,7 @@ import AdminCompanyForm from "@/components/admin-company-form";
 import AdminAssemblyForm from "@/components/admin-assembly-form";
 import AdminCompanyActions from "@/components/admin-company-actions";
 import AdminAssemblyActions from "@/components/admin-assembly-actions";
+import LogoAvatar from "@/components/logo-avatar";
 import { Building2, ArrowLeft, ShieldCheck, Users, Settings, Home } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -76,16 +77,20 @@ export default async function AdminPage() {
           {companies.map((c) => (
             <Card key={c.id}>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Building2 className="h-5 w-5 text-emerald-600" />
-                  {c.name}
-                </CardTitle>
-                <CardDescription className="flex items-center justify-between gap-2">
-                  <span>س.ت: {c.crNumber} • المعرف: <span dir="ltr">{c.slug}</span></span>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-3">
+                    <LogoAvatar logoUrl={c.logoUrl} name={c.name} themeColor={c.themeColor} size={44} />
+                    <div>
+                      <CardTitle className="text-base">{c.name}</CardTitle>
+                      <CardDescription>
+                        س.ت: {c.crNumber} • المعرف: <span dir="ltr">{c.slug}</span>
+                      </CardDescription>
+                    </div>
+                  </div>
                   <AdminCompanyActions
-                    company={{ id: c.id, name: c.name, slug: c.slug, crNumber: c.crNumber, themeColor: c.themeColor }}
+                    company={{ id: c.id, name: c.name, slug: c.slug, crNumber: c.crNumber, themeColor: c.themeColor, logoUrl: c.logoUrl }}
                   />
-                </CardDescription>
+                </div>
               </CardHeader>
               <CardContent className="space-y-3">
                 {c.assemblies.length === 0 && <p className="text-sm text-slate-500">لا توجد جمعيات.</p>}

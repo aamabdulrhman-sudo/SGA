@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { STATUS_LABEL, CHOICE_LABEL, ASSEMBLY_TYPE_LABEL, formatDateAr, formatWeight } from "@/lib/utils";
+import LogoAvatar from "@/components/logo-avatar";
 import {
   MonitorPlay, Users, Check, X, Send, Clock, Lock, UserCheck, CheckCircle2, XCircle,
 } from "lucide-react";
@@ -15,9 +16,13 @@ import {
 export default function ProxyRoom({
   assemblyId,
   companyName,
+  logoUrl,
+  themeColor,
 }: {
   assemblyId: string;
   companyName: string;
+  logoUrl?: string | null;
+  themeColor?: string | null;
 }) {
   const { state, refresh } = useAssemblyState(assemblyId);
   const [busy, setBusy] = useState(false);
@@ -96,15 +101,18 @@ export default function ProxyRoom({
     <main className="min-h-screen bg-slate-100 pb-20">
       <header className="bg-navy-800 text-white">
         <div className="max-w-5xl mx-auto px-4 py-5 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2 text-xs text-slate-400 mb-1">
-              <UserCheck className="h-3.5 w-3.5 text-amber-400" />
-              بوابة المفوض — {companyName}
-            </div>
-            <h1 className="font-extrabold text-lg">{assembly.title}</h1>
-            <div className="flex items-center gap-2 mt-1.5">
-              <Badge className="bg-amber-600">{ASSEMBLY_TYPE_LABEL[assembly.type]}</Badge>
-              <span className="text-xs text-slate-300">{formatDateAr(assembly.scheduledAt)}</span>
+          <div className="flex items-center gap-3">
+            <LogoAvatar logoUrl={logoUrl} name={companyName} themeColor={themeColor} size={44} />
+            <div>
+              <div className="flex items-center gap-2 text-xs text-slate-400 mb-1">
+                <UserCheck className="h-3.5 w-3.5 text-amber-400" />
+                بوابة المفوض — {companyName}
+              </div>
+              <h1 className="font-extrabold text-lg">{assembly.title}</h1>
+              <div className="flex items-center gap-2 mt-1.5">
+                <Badge className="bg-amber-600">{ASSEMBLY_TYPE_LABEL[assembly.type]}</Badge>
+                <span className="text-xs text-slate-300">{formatDateAr(assembly.scheduledAt)}</span>
+              </div>
             </div>
           </div>
           <div className="text-left">

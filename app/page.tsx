@@ -5,6 +5,7 @@ import { setupCompleted } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Building2, ShieldCheck, Vote, FileText, Users, Rocket } from "lucide-react";
+import LogoAvatar from "@/components/logo-avatar";
 
 export const dynamic = "force-dynamic";
 
@@ -91,10 +92,15 @@ export default async function LandingPage() {
           {companies.map((c) => (
             <Card key={c.id} className="bg-white/5 border-white/10 text-white backdrop-blur">
               <CardHeader>
-                <CardTitle className="text-white">{c.name}</CardTitle>
-                <CardDescription className="text-slate-400">
-                  س.ت: {c.crNumber} • {c.assemblies.length} جمعية
-                </CardDescription>
+                <div className="flex items-center gap-3">
+                  <LogoAvatar logoUrl={c.logoUrl} name={c.name} themeColor={c.themeColor} size={44} />
+                  <div>
+                    <CardTitle className="text-white">{c.name}</CardTitle>
+                    <CardDescription className="text-slate-400">
+                      س.ت: {c.crNumber} • {c.assemblies.length} جمعية
+                    </CardDescription>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 <Link
