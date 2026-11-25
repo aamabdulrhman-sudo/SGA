@@ -34,7 +34,7 @@ RUN npm run build
 FROM base AS runner
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
-    PORT=3000 \
+    PORT=8110:3000 \
     HOSTNAME=0.0.0.0
 
 # Full node_modules (needed for `prisma db push` init + `next start`)
