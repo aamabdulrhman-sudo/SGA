@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useAssemblyState } from "@/lib/use-assembly-state";
 import { QuorumMeter } from "@/components/quorum-meter";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,8 @@ import { STATUS_LABEL, CHOICE_LABEL, ASSEMBLY_TYPE_LABEL, formatDateAr, formatWe
 import LogoAvatar from "@/components/logo-avatar";
 import {
   Gauge, Radio, PlayCircle, Lock, Upload, FileSpreadsheet, Printer, History,
-  UserPlus, CheckCircle2, XCircle, Clock, Download, Activity, Users, FileText, Building,
+  CheckCircle2, XCircle, Clock, Download, Activity, Users, FileText, Building,
+  RefreshCw, ArrowRight, Scale,
 } from "lucide-react";
 
 const TABS = [
@@ -30,11 +31,13 @@ const TABS = [
 export default function SecretaryRoom({
   assemblyId,
   companyName,
+  companySlug,
   logoUrl,
   themeColor,
 }: {
   assemblyId: string;
   companyName: string;
+  companySlug?: string | null;
   logoUrl?: string | null;
   themeColor?: string | null;
 }) {
@@ -44,10 +47,9 @@ export default function SecretaryRoom({
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [rejecting, setRejecting] = useState<any>(null);
   const [rejectReason, setRejectReason] = useState("");
-  const [addShOpen, setAddShOpen] = useState(false);
   const [addItemOpen, setAddItemOpen] = useState(false);
   const [streamUrl, setStreamUrl] = useState<string>("");
-  const fileRef = useRef<HTMLInputElement>(null);
+  const slug = companySlug || state?.assembly?.company?.slug || "";
 
   async function call(url: string, method: string, body: unknown, successText?: string) {
     setBusy(true);
@@ -59,7 +61,16 @@ export default function SecretaryRoom({
         body: JSON.stringify(body),
       });
       const data = await res.json().catch(() => ({}));
-      if (res.ok) setMsg({ ok: true, text: data.message || successText || "تمت العملية بنجاح" });
+      if (res.ok) {
+        const text =
+          data.message ||
+          (data.quorum
+            ? `تم فتح التصويت — النصاب المطلوب: ${data.quorum.required}% — النصاب الفعلي: ${Number(data.quorum.actual).toFixed(1)}% ${data.quorum.met ? "(مكتمل ✓)" : "(غير مكتمل ✗)"}`
+            : data.added !== undefined
+            ? `تمت المزامنة — أُضيف ${data.added} مساهم من سجل الشركة (إجمالي الجمعية الآن: ${data.assemblyTotal})`
+            : successText || "تمت العملية بنجاح");
+        setMsg({ ok: true, text });
+      }
       else setMsg({ ok: false, text: data.error || "حدث خطأ" });
       await refresh();
     } finally {
@@ -109,12 +120,24 @@ export default function SecretaryRoom({
                   غرفة التحكم المباشر — {companyName}
                 </div>
                 <h1 className="font-extrabold text-lg">{assembly.title}</h1>
-                <div className="flex items-center gap-2 mt-1.5">
-                  <Badge className="bg-emerald-600">{ASSEMBLY_TYPE_LABEL[assembly.type]}</Badge>
-                  <span className="text-xs text-slate-300">{formatDateAr(assembly.scheduledAt)}</span>
-                  <Badge variant={assembly.status === "ACTIVE" ? "success" : "muted"}>
-                    {STATUS_LABEL[assembly.status]}
-                  </Badge>
+                <div className="flex items-center gap-3 mt-1.5">
+                  <div className="flex items-center gap-2">
+                    <Badge className="bg-emerald-600">{ASSEMBLY_TYPE_LABEL[assembly.type]}</Badge>
+                    <span className="text-xs text-slate-300">{formatDateAr(assembly.scheduledAt)}</span>
+                    <Badge variant={assembly.status === "ACTIVE" ? "success" : "muted"}>
+                      {STATUS_LABEL[assembly.status]}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    {slug && (
+                      <a href={`/c/${slug}`} className="flex items-center gap-1 text-emerald-400 hover:text-emerald-300 font-bold">
+                        <ArrowRight className="h-3 w-3" /> لوحة الشركة
+                      </a>
+                    )}
+                    <a href="/admin" className="flex items-center gap-1 text-slate-400 hover:text-white font-bold">
+                      <ArrowRight className="h-3 w-3" /> اللوحة المركزية
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
@@ -283,7 +306,15 @@ export default function SecretaryRoom({
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="flex-1 min-w-56">
                       <div className="text-xs text-slate-400 mb-1">
-                        البند {item.orderIndex} • {item.votingType === "CUMULATIVE" ? `تصويت تراكمي (${item.seatsCount} مقاعد)` : "تصويت اعتيادي"}
+                        البند {item.orderIndex} • {item.votingType === "CUMULATIVE" ? `تصويت تراكمي (${item.seatsCount} مقاعد)` : "تصويت اعتيادي"} •{" "}
+                        <span className="inline-flex items-center gap-1 font-bold text-navy-800">
+                          <Scale className="h-3 w-3" /> النصاب: {item.quorumPercentage ?? assembly.quorumPercentage}%
+                        </span>
+                        {item.quorumPctAtOpen !== null && item.quorumPctAtOpen !== undefined && (
+                          <span className={item.quorumMetAtOpen ? "text-emerald-600" : "text-red-600"}>
+                            {" "}• عند الفتح: {Number(item.quorumPctAtOpen).toFixed(1)}% {item.quorumMetAtOpen ? "مكتمل ✓" : "غير مكتمل ✗"}
+                          </span>
+                        )}
                       </div>
                       <CardTitle className="text-base leading-snug">{item.title}</CardTitle>
                       {item.description && <CardDescription className="mt-1">{item.description}</CardDescription>}
@@ -451,25 +482,22 @@ export default function SecretaryRoom({
 
         {tab === "shareholders" && (
           <div className="space-y-4">
+            <div className="rounded-xl bg-blue-50 border border-blue-200 p-3.5 text-sm text-blue-900 leading-6">
+              <Users className="inline h-4 w-4 ml-1" />
+              سجل المساهمين المصدر على مستوى الشركة — نسخة هذه الجمعية لقطة مستقلة سُحبت عند إنشائها. لإضافة مساهمين
+              جدد نهائياً أضفهم في <strong>سجل الشركة</strong> ثم اضغط «سحب من سجل الشركة» لاستكمال الناقص.
+            </div>
             <div className="flex flex-wrap gap-2 justify-end">
-              <Button onClick={() => setAddShOpen(true)} disabled={busy}>
-                <UserPlus className="h-4 w-4" /> إضافة مساهم يدوياً
+              <Button onClick={() => call("/api/shareholders/sync", "POST", { assemblyId }, undefined)} disabled={busy}>
+                <RefreshCw className="h-4 w-4" /> سحب من سجل الشركة
               </Button>
-              <Button variant="outline" onClick={() => fileRef.current?.click()} disabled={busy}>
-                <Upload className="h-4 w-4" /> استيراد Excel / CSV
-              </Button>
-              <input
-                ref={fileRef}
-                type="file"
-                accept=".xlsx,.xls,.csv"
-                className="hidden"
-                onChange={(e) => e.target.files?.[0] && importExcel(e.target.files[0])}
-              />
-              <a href="/template-cap-table.xlsx" download>
-                <Button variant="outline">
-                  <Download className="h-4 w-4" /> نموذج الاستيراد
-                </Button>
-              </a>
+              {slug && (
+                <a href={`/c/${slug}`}>
+                  <Button variant="outline">
+                    <Building className="h-4 w-4" /> إدارة سجل الشركة
+                  </Button>
+                </a>
+              )}
               <a href={`/print/shareholders/${assemblyId}`} target="_blank">
                 <Button variant="outline">
                   <Printer className="h-4 w-4" /> استخراج الكشف PDF
@@ -591,43 +619,6 @@ export default function SecretaryRoom({
         </div>
       </Dialog>
 
-      {/* Add shareholder dialog */}
-      <Dialog open={addShOpen} onClose={() => setAddShOpen(false)} title="إضافة مساهم جديد">
-        <form
-          onSubmit={async (e) => {
-            e.preventDefault();
-            const f = new FormData(e.currentTarget);
-            await call(
-              "/api/shareholders",
-              "POST",
-              {
-                assemblyId,
-                name: f.get("name"),
-                nationalId: f.get("nationalId"),
-                mobile: f.get("mobile"),
-                email: f.get("email"),
-                sharesCount: f.get("sharesCount"),
-              }
-            );
-            setAddShOpen(false);
-          }}
-          className="space-y-3"
-        >
-          <div><Label>الاسم الكامل *</Label><Input name="name" required /></div>
-          <div className="grid grid-cols-2 gap-3">
-            <div><Label>رقم الهوية / السجل *</Label><Input name="nationalId" required dir="ltr" /></div>
-            <div><Label>عدد الأسهم *</Label><Input name="sharesCount" required dir="ltr" type="number" min={1} /></div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div><Label>الجوال</Label><Input name="mobile" dir="ltr" /></div>
-            <div><Label>البريد الإلكتروني</Label><Input name="email" dir="ltr" type="email" /></div>
-          </div>
-          <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700" disabled={busy}>
-            إضافة المساهم
-          </Button>
-        </form>
-      </Dialog>
-
       {/* Add agenda item dialog */}
       <Dialog open={addItemOpen} onClose={() => setAddItemOpen(false)} title="إضافة بند لجدول الأعمال">
         <form
@@ -640,6 +631,7 @@ export default function SecretaryRoom({
               description: f.get("description"),
               votingType: f.get("votingType"),
               seatsCount: f.get("seatsCount"),
+              quorumPercentage: f.get("quorumPercentage"),
             });
             setAddItemOpen(false);
           }}
@@ -656,6 +648,11 @@ export default function SecretaryRoom({
               </Select>
             </div>
             <div><Label>عدد المقاعد (للتراكمي)</Label><Input name="seatsCount" dir="ltr" type="number" min={1} defaultValue={3} /></div>
+          </div>
+          <div>
+            <Label>النصاب القانوني الخاص بالبند %</Label>
+            <Input name="quorumPercentage" dir="ltr" type="number" min={1} max={100} placeholder={String(assembly.quorumPercentage) + " (نصاب الجمعية)"} />
+            <p className="text-xs text-slate-500 mt-1">اتركه فارغاً لوراثة نصاب الجمعية ({assembly.quorumPercentage}%) — كل بند له نصابه المستقل عند فتح التصويت</p>
           </div>
           <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700" disabled={busy}>
             إضافة البند

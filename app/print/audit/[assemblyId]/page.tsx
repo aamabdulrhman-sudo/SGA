@@ -20,8 +20,9 @@ export default async function AuditLogPrintPage({
   });
   if (!assembly) notFound();
 
+  // سجل تدقيق هذه الجمعية فقط — لا تُخلط السجلات العامة أو سجلات الشركات الأخرى
   const logs = await prisma.auditLog.findMany({
-    where: { OR: [{ assemblyId: params.assemblyId }, { assemblyId: null }] },
+    where: { assemblyId: params.assemblyId },
     orderBy: { timestamp: "asc" },
     take: 500,
   });
@@ -32,6 +33,14 @@ export default async function AuditLogPrintPage({
         <PrintButton />
 
         <div className="text-center border-b-4 border-double border-black pb-6 mb-8">
+          {assembly.company.logoUrl && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={assembly.company.logoUrl}
+              alt={`شعار ${assembly.company.name}`}
+              className="mx-auto mb-4 h-20 object-contain"
+            />
+          )}
           <h1 className="text-2xl font-extrabold">{assembly.company.name}</h1>
           <p className="text-sm mt-1">سجل تجاري رقم: {assembly.company.crNumber}</p>
           <h2 className="text-xl font-bold mt-4">سجل التدقيق الرسمي (Audit Log)</h2>

@@ -35,6 +35,14 @@ export default async function ShareholdersPrintPage({
         <PrintButton />
 
         <div className="text-center border-b-4 border-double border-black pb-6 mb-8">
+          {assembly.company.logoUrl && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={assembly.company.logoUrl}
+              alt={`شعار ${assembly.company.name}`}
+              className="mx-auto mb-4 h-20 object-contain"
+            />
+          )}
           <h1 className="text-2xl font-extrabold">{assembly.company.name}</h1>
           <p className="text-sm mt-1">سجل تجاري رقم: {assembly.company.crNumber}</p>
           <h2 className="text-xl font-bold mt-4">كشف سجل المساهمين</h2>

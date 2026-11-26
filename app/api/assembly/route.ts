@@ -33,8 +33,30 @@ export async function POST(req: NextRequest) {
       status: "DRAFT",
     },
   });
-  await logAudit(assembly.id, session.name, session.role, "إنشاء جمعية", `الجمعية: ${assembly.title} — الشركة: ${company.name}`);
-  return NextResponse.json({ ok: true, assemblyId: assembly.id });
+
+  // سحب سجل مساهمي الشركة تلقائياً إلى الجمعية الجديدة (نسخة مستقلة لكل جمعية)
+  const register = await prisma.companyShareholder.findMany({ where: { companyId } });
+  if (register.length > 0) {
+    await prisma.shareholder.createMany({
+      data: register.map((r) => ({
+        assemblyId: assembly.id,
+        name: r.name,
+        nationalId: r.nationalId,
+        mobile: r.mobile,
+        email: r.email,
+        sharesCount: r.sharesCount,
+      })),
+    });
+  }
+
+  await logAudit(
+    assembly.id,
+    session.name,
+    session.role,
+    "إنشاء جمعية",
+    `الجمعية: ${assembly.title} — الشركة: ${company.name} — تم سحب ${register.length} مساهم من سجل الشركة`
+  );
+  return NextResponse.json({ ok: true, assemblyId: assembly.id, shareholdersPulled: register.length });
 }
 
 /** Update assembly status / stream (staff) */

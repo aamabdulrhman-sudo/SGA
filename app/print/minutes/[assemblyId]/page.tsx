@@ -44,6 +44,14 @@ export default async function MinutesPage({
         <PrintButton />
 
         <div className="text-center border-b-4 border-double border-black pb-6 mb-8">
+          {assembly.company.logoUrl && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={assembly.company.logoUrl}
+              alt={`شعار ${assembly.company.name}`}
+              className="mx-auto mb-4 h-20 object-contain"
+            />
+          )}
           <h1 className="text-2xl font-extrabold">{assembly.company.name}</h1>
           <p className="text-sm mt-1">سجل تجاري رقم: {assembly.company.crNumber}</p>
           <h2 className="text-xl font-bold mt-4">محضر الجمعية العامة</h2>
@@ -89,13 +97,23 @@ export default async function MinutesPage({
           <h3 className="font-bold text-lg mb-3 border-b border-black pb-1">ثانياً: بنود جدول الأعمال ونتائج التصويت</h3>
           <div className="space-y-5">
             {assembly.agendaItems.map((item) => {
+              const requiredQuorum = item.quorumPercentage ?? assembly.quorumPercentage;
+              const quorumLine = (
+                <div className={`text-xs mb-2 border border-black rounded px-2 py-1 inline-block ${item.quorumMetAtOpen === false ? "text-red-700" : "text-black"}`}>
+                  النصاب القانوني للبند: {requiredQuorum}%
+                  {item.quorumPctAtOpen !== null && item.quorumPctAtOpen !== undefined && (
+                    <> — النصاب الفعلي عند فتح التصويت: {item.quorumPctAtOpen.toFixed(2)}% — {item.quorumMetAtOpen ? "مكتمل ✓" : "غير مكتمل ✗"}</>
+                  )}
+                </div>
+              );
               if (item.votingType === "STANDARD") {
                 const approve = item.votes.filter((v) => v.choice === "APPROVE").reduce((a, v) => a + v.sharesWeight, 0);
                 const reject = item.votes.filter((v) => v.choice === "REJECT").reduce((a, v) => a + v.sharesWeight, 0);
                 const abstain = item.votes.filter((v) => v.choice === "ABSTAIN").reduce((a, v) => a + v.sharesWeight, 0);
                 return (
                   <div key={item.id} className="border border-black rounded p-4 text-sm">
-                    <div className="font-bold mb-2">البند {item.orderIndex}: {item.title}</div>
+                    <div className="font-bold mb-1">البند {item.orderIndex}: {item.title}</div>
+                    {quorumLine}
                     <table className="w-full border border-black" cellPadding={6}>
                       <thead>
                         <tr className="bg-gray-100 border-b border-black">
@@ -122,9 +140,10 @@ export default async function MinutesPage({
               const sorted = [...map.entries()].sort((a, b) => b[1] - a[1]);
               return (
                 <div key={item.id} className="border border-black rounded p-4 text-sm">
-                  <div className="font-bold mb-2">
+                  <div className="font-bold mb-1">
                     البند {item.orderIndex}: {item.title} (تصويت تراكمي — {item.seatsCount} مقاعد)
                   </div>
+                  {quorumLine}
                   <table className="w-full border border-black" cellPadding={6}>
                     <thead>
                       <tr className="bg-gray-100 border-b border-black">

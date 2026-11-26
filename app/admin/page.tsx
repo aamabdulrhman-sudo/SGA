@@ -109,14 +109,20 @@ export default async function AdminPage() {
                         <AdminAssemblyActions assemblyId={a.id} assemblyTitle={a.title} status={a.status} />
                       </div>
                       <Link
-                        href={`/c/${c.slug}`}
+                        href={`/c/${c.slug}/a/${a.id}`}
                         className="text-xs font-bold text-emerald-700 hover:underline flex items-center gap-1"
                       >
-                        فتح غرفة التحكم <ArrowLeft className="h-3 w-3" />
+                        غرفة التحكم <ArrowLeft className="h-3 w-3" />
                       </Link>
                     </div>
                   </div>
                 ))}
+                <Link
+                  href={`/c/${c.slug}`}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:underline"
+                >
+                  بوابة الشركة (السجل والجمعيات) <ArrowLeft className="h-3 w-3" />
+                </Link>
               </CardContent>
             </Card>
           ))}

@@ -39,7 +39,10 @@ export default function AdminAssemblyForm({ companies }: { companies: CompanyOpt
       });
       const data = await res.json();
       if (res.ok) {
-        setMsg({ ok: true, text: "تم إنشاء الجمعية كمسودة — يمكن تنشيطها من غرفة التحكم" });
+        setMsg({
+          ok: true,
+          text: `تم إنشاء الجمعية كمسودة${data.shareholdersPulled !== undefined ? ` — سُحب ${data.shareholdersPulled} مساهم من سجل الشركة تلقائياً` : ""} — يمكن تنشيطها من غرفة التحكم`,
+        });
         (e.target as HTMLFormElement).reset();
         router.refresh();
       } else setMsg({ ok: false, text: data.error || "خطأ" });

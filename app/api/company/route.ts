@@ -2,6 +2,44 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession, isStaff, logAudit } from "@/lib/auth";
 
+/** Company data + register shareholders (staff only, scoped lookups) */
+export async function GET(req: NextRequest) {
+  const session = await getSession();
+  if (!session || !isStaff(session.role)) {
+    return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
+  }
+  const slug = req.nextUrl.searchParams.get("slug");
+  const companyId = req.nextUrl.searchParams.get("companyId");
+  if (!slug && !companyId) {
+    return NextResponse.json({ error: "slug أو companyId مطلوب" }, { status: 400 });
+  }
+  const company = await prisma.company.findUnique({
+    where: slug ? { slug } : { id: companyId! },
+    include: { registerShareholders: { orderBy: { createdAt: "asc" } } },
+  });
+  if (!company) {
+    return NextResponse.json({ error: "الشركة غير موجودة" }, { status: 404 });
+  }
+  return NextResponse.json({
+    ok: true,
+    company: {
+      id: company.id,
+      name: company.name,
+      slug: company.slug,
+      crNumber: company.crNumber,
+      logoUrl: company.logoUrl,
+    },
+    register: company.registerShareholders.map((s) => ({
+      id: s.id,
+      name: s.name,
+      nationalId: s.nationalId,
+      mobile: s.mobile,
+      email: s.email,
+      sharesCount: s.sharesCount,
+    })),
+  });
+}
+
 /** Create company (staff) */
 export async function POST(req: NextRequest) {
   const session = await getSession();

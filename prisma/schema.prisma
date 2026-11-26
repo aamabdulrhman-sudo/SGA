@@ -8,14 +8,15 @@ datasource db {
 }
 
 model Company {
-  id         String     @id @default(cuid())
-  name       String
-  slug       String     @unique
-  crNumber   String
-  logoUrl    String?
-  themeColor String     @default("#0F172A")
-  createdAt  DateTime   @default(now())
-  assemblies Assembly[]
+  id                String               @id @default(cuid())
+  name              String
+  slug              String               @unique
+  crNumber          String
+  logoUrl           String?
+  themeColor        String               @default("#0F172A")
+  createdAt         DateTime             @default(now())
+  assemblies        Assembly[]
+  registerShareholders CompanyShareholder[]
 }
 
 model Assembly {
@@ -72,16 +73,19 @@ model Proxy {
 }
 
 model AgendaItem {
-  id          String   @id @default(cuid())
-  assemblyId  String
-  assembly    Assembly @relation(fields: [assemblyId], references: [id], onDelete: Cascade)
-  orderIndex  Int
-  title       String
-  description String?
-  votingType  String   @default("STANDARD") // STANDARD | CUMULATIVE
-  seatsCount  Int?
-  status      String   @default("DRAFT") // DRAFT | OPEN | CLOSED
-  votes       Vote[]
+  id             String   @id @default(cuid())
+  assemblyId     String
+  assembly       Assembly @relation(fields: [assemblyId], references: [id], onDelete: Cascade)
+  orderIndex     Int
+  title          String
+  description    String?
+  votingType     String   @default("STANDARD") // STANDARD | CUMULATIVE
+  seatsCount     Int?
+  status         String   @default("DRAFT") // DRAFT | OPEN | CLOSED
+  quorumPercentage        Int?     // نصاب البند القانوني — يرث نصاب الجمعية إذا فُرغ
+  quorumPctAtOpen         Float?   // نسبة الحضور الفعلية لحظة فتح التصويت
+  quorumMetAtOpen         Boolean? // هل اكتمل نصاب البند عند فتحه
+  votes          Vote[]
 }
 
 model Vote {
@@ -118,6 +122,21 @@ model OtpCode {
   expiresAt  DateTime
   used       Boolean  @default(false)
   createdAt  DateTime @default(now())
+}
+
+// سجل مساهمي الشركة المصدر — تُسحب منه نسخة لكل جمعية جديدة عند إنشائها
+model CompanyShareholder {
+  id          String    @id @default(cuid())
+  companyId   String
+  company     Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name        String
+  nationalId  String
+  mobile      String?
+  email       String?
+  sharesCount Int
+  createdAt   DateTime  @default(now())
+
+  @@unique([companyId, nationalId])
 }
 
 // Staff accounts: PLATFORM_MANAGER | SECRETARY
