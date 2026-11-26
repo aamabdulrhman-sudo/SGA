@@ -10,9 +10,31 @@ services:
       - JWT_SECRET=${JWT_SECRET:-sga-change-me-in-production-9f2c8d4a}
       # ملاحظة: لا تفعّل DEMO_MODE في الإنتاج — يجعل رمز التحقق 1234 مقبولاً للجميع
       - NODE_ENV=production
+      # البث الداخلي (كاميرا ومايك داخل الموقع) — يجب أن تطابق مفاتيح livekit.yaml
+      - LIVEKIT_API_KEY=${LIVEKIT_API_KEY:-sga-live-key-2026}
+      - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET:-sga-live-secret-change-me-7f3b9e}
+      # عنوان خادم البث من داخل شبكة الـ Docker
+      - LIVEKIT_INTERNAL_URL=http://livekit:7880
+      # عنوان خادم البث من المتصفح — ضعه مثل ws://<server-ip>:7880 أو wss عبر نطاقك
+      # إن تُرك فارغاً يُستنتج تلقائياً: ws://<اسم النطاق أو IP الذي تفتح به الموقع>:7880
+      - LIVEKIT_PUBLIC_URL=${LIVEKIT_PUBLIC_URL:-}
     volumes:
       - sga_data:/app/data
       - sga_uploads:/app/public/uploads
+    depends_on:
+      - livekit
+
+  livekit:
+    image: livekit/livekit-server:latest
+    container_name: sga-livekit
+    restart: unless-stopped
+    command: --config /etc/livekit.yaml
+    volumes:
+      - ./livekit.yaml:/etc/livekit.yaml:ro
+    ports:
+      - "7880:7880"                      # WebSocket — إشارات الاتصال للمتصفح
+      - "7881:7881"                      # TCP fallback للـ WebRTC
+      - "50000-50200:50000-50200/udp"    # منافذ الوسائط RTC
 
 volumes:
   sga_data:

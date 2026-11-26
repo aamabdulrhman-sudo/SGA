@@ -28,6 +28,7 @@ model Assembly {
   status           String      @default("DRAFT") // DRAFT | ACTIVE | CLOSED
   scheduledAt      DateTime
   streamUrl        String?
+  internalLive     Boolean     @default(false) // بث داخلي من داخل المنصة (كاميرا ومايك المذيع عبر WebRTC/LiveKit)
   quorumPercentage Int         @default(50)
   agendaItems      AgendaItem[]
   shareholders     Shareholder[]

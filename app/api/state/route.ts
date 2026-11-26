@@ -106,6 +106,7 @@ export async function GET(req: NextRequest) {
       status: assembly.status,
       scheduledAt: assembly.scheduledAt,
       streamUrl: assembly.streamUrl,
+      internalLive: assembly.internalLive,
       quorumPercentage: assembly.quorumPercentage,
       company: {
         name: assembly.company.name,

@@ -16,14 +16,17 @@ import { STATUS_LABEL, CHOICE_LABEL, ASSEMBLY_TYPE_LABEL, formatDateAr, formatWe
 import LogoAvatar from "@/components/logo-avatar";
 import LiveStream from "@/components/live-stream";
 import LiveChat from "@/components/live-chat";
+import LiveStudio from "@/components/live-studio";
+import { useEffect } from "react";
 import {
   Gauge, Radio, PlayCircle, Lock, Upload, FileSpreadsheet, Printer, History,
   CheckCircle2, XCircle, Clock, Download, Activity, Users, FileText, Building,
-  RefreshCw, ArrowRight, Scale, MessageSquare,
+  RefreshCw, ArrowRight, Scale, MessageSquare, MonitorPlay,
 } from "lucide-react";
 
 const TABS = [
   { key: "overview", label: "غرفة التحكم", icon: Gauge },
+  { key: "studio", label: "استوديو البث", icon: MonitorPlay },
   { key: "agenda", label: "بنود التصويت", icon: FileText },
   { key: "chat", label: "دردشة الاستفسارات", icon: MessageSquare },
   { key: "proxies", label: "اعتماد التوكيلات", icon: History },
@@ -52,7 +55,15 @@ export default function SecretaryRoom({
   const [rejectReason, setRejectReason] = useState("");
   const [addItemOpen, setAddItemOpen] = useState(false);
   const [streamUrl, setStreamUrl] = useState<string>("");
+  const [livekitEnabledClient, setLivekitEnabledClient] = useState<boolean | null>(null);
   const slug = companySlug || state?.assembly?.company?.slug || "";
+
+  useEffect(() => {
+    fetch(`/api/livekit/status?assemblyId=${assemblyId}`, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setLivekitEnabledClient(d?.enabled ?? false))
+      .catch(() => setLivekitEnabledClient(false));
+  }, [assemblyId]);
 
   async function call(url: string, method: string, body: unknown, successText?: string) {
     setBusy(true);
@@ -322,6 +333,53 @@ export default function SecretaryRoom({
               <p>• الدردشة مرتبطة بجمعية واحدة ولا ترى الحضور إلا رسائل جمعيتهم.</p>
               <p>• يمكن للحضور متابعة التصويت والبث والدردشة من نفس الصفحة أثناء الاجتماع.</p>
             </div>
+          </div>
+        )}
+
+        {tab === "studio" && (
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="rounded-xl bg-blue-50 border border-blue-200 p-3.5 text-sm text-blue-900 leading-6 flex-1 min-w-72">
+                <MonitorPlay className="inline h-4 w-4 ml-1" />
+                بث من داخل المنصة بكاميرا ومايك جهازك مباشرة (WebRTC) — بدون زوم أو تطبيقات خارجية.
+                {assembly.internalLive
+                  ? " البث الداخلي مفعّل ويظهر لمساهمي الجمعية في صفحتهم الآن."
+                  : " فعّل البث الداخلي ليظهر لملّاك الأسهم في صفحاتهم."}
+              </div>
+              <Button
+                variant={assembly.internalLive ? "destructive" : "emerald"}
+                disabled={busy || livekitEnabledClient === false}
+                onClick={() =>
+                  call(
+                    "/api/assembly",
+                    "PATCH",
+                    { assemblyId, internalLive: !assembly.internalLive },
+                    assembly.internalLive ? "تم تعطيل البث الداخلي" : "تم تفعيل البث الداخلي — يظهر الآن للمساهمين"
+                  )
+                }
+              >
+                {assembly.internalLive ? "تعطيل البث الداخلي" : "تفعيل البث الداخلي"}
+              </Button>
+            </div>
+
+            {livekitEnabledClient === false && (
+              <div className="rounded-xl bg-amber-50 border border-amber-300 p-4 text-sm text-amber-900 leading-6">
+                <strong>البث الداخلي غير مهيأ على الخادم.</strong> لتشغيله أضف متغيرات البيئة
+                <code className="mx-1 px-1.5 py-0.5 bg-amber-100 rounded" dir="ltr">LIVEKIT_API_KEY</code>
+                و
+                <code className="mx-1 px-1.5 py-0.5 bg-amber-100 rounded" dir="ltr">LIVEKIT_API_SECRET</code>
+                وشغّل خدمة LiveKit المرفقة في
+                <code className="mx-1 px-1.5 py-0.5 bg-amber-100 rounded" dir="ltr">docker-compose.yml</code>
+                — حتى ذلك الحقيبتان البث الخارجي (يوتيوب / زوم / تيمز) والدردشة تعملان بشكل طبيعي.
+              </div>
+            )}
+
+            <LiveStudio
+              assemblyId={assemblyId}
+              staffRole={state.viewer?.role || "SECRETARY"}
+              staffName={state.viewer?.name || ""}
+              onEnded={refresh}
+            />
           </div>
         )}
 

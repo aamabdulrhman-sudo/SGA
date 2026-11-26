@@ -37,12 +37,14 @@ export default function LiveChat({
   viewerName,
   title = "دردشة البث المباشر — استفسارات المساهمين",
   className,
+  overlay = false,
 }: {
   assemblyId: string;
   viewerRole: string;
   viewerName: string;
   title?: string;
   className?: string;
+  overlay?: boolean;
 }) {
   const [messages, setMessages] = useState<ChatMessageDto[]>([]);
   const [text, setText] = useState("");
@@ -112,10 +114,16 @@ export default function LiveChat({
 
   return (
     <div className={className}>
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col h-full">
-        <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-          <div className="flex items-center gap-2 font-extrabold text-sm text-navy-800">
-            <MessageSquare className="h-4 w-4 text-emerald-600" />
+      <div
+        className={`flex flex-col ${
+          overlay
+            ? "h-full w-full overflow-hidden rounded-xl border border-white/20 bg-navy-900/80 shadow-xl backdrop-blur-md"
+            : "h-full bg-white rounded-xl border border-slate-200 shadow-sm"
+        }`}
+      >
+        <div className={`px-4 py-3 border-b flex items-center justify-between ${overlay ? "border-white/15" : "border-slate-100"}`}>
+          <div className={`flex items-center gap-2 font-extrabold text-sm ${overlay ? "text-white" : "text-navy-800"}`}>
+            <MessageSquare className="h-4 w-4 text-emerald-400" />
             {title}
           </div>
           <Badge variant="success">مباشر</Badge>
@@ -124,10 +132,10 @@ export default function LiveChat({
         <div
           ref={boxRef}
           onScroll={onScroll}
-          className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-64 max-h-96"
+          className={`flex-1 overflow-y-auto px-4 py-3 space-y-3 ${overlay ? "min-h-0" : "min-h-64 max-h-96"}`}
         >
           {messages.length === 0 && (
-            <p className="text-sm text-slate-400 text-center py-8">
+            <p className={`text-sm text-center py-8 ${overlay ? "text-white/70" : "text-slate-400"}`}>
               لا توجد رسائل بعد — اكتب استفسارك وسيجيب عليه أمين السر مباشرة.
             </p>
           )}
@@ -158,15 +166,15 @@ export default function LiveChat({
           })}
         </div>
 
-        {error && <div className="px-4 pb-2 text-xs font-semibold text-red-600">{error}</div>}
+        {error && <div className={`px-4 pb-2 text-xs font-semibold ${overlay ? "text-red-300" : "text-red-600"}`}>{error}</div>}
 
-        <form onSubmit={send} className="border-t border-slate-100 p-3 flex gap-2 items-center">
+        <form onSubmit={send} className={`flex gap-2 items-center border-t ${overlay ? "p-2.5 border-white/15" : "p-3 border-slate-100"}`}>
           <Input
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder={isStaff ? "اكتب ردك على استفسارات المساهمين..." : "اكتب استفسارك هنا..."}
             maxLength={500}
-            className="flex-1"
+            className={`flex-1 ${overlay ? "bg-white/95" : ""}`}
           />
           <Button type="submit" size="sm" variant="emerald" disabled={busy || !text.trim()}>
             <Send className="h-4 w-4" />

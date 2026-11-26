@@ -13,6 +13,7 @@ import { STATUS_LABEL, CHOICE_LABEL, ASSEMBLY_TYPE_LABEL, formatDateAr, formatWe
 import LogoAvatar from "@/components/logo-avatar";
 import LiveStream from "@/components/live-stream";
 import LiveChat from "@/components/live-chat";
+import LiveBroadcast from "@/components/live-broadcast";
 import {
   BadgeCheck, Lock, Send, UserPlus, Trash2, FileText, CheckCircle2,
   XCircle, Clock, Users, Upload, Check, X,
@@ -191,15 +192,19 @@ export default function ShareholderRoom({
         </div>
 
         {/* Live stream + broadcast chat */}
-        <div className="grid lg:grid-cols-2 gap-5 items-start">
-          {assembly.streamUrl && <LiveStream streamUrl={assembly.streamUrl} />}
-          <LiveChat
-            assemblyId={assemblyId}
-            viewerRole="SHAREHOLDER"
-            viewerName={me.name}
-            className={assembly.streamUrl ? "" : "lg:col-span-2"}
-          />
-        </div>
+        {assembly.internalLive ? (
+          <LiveBroadcast assemblyId={assemblyId} viewerRole="SHAREHOLDER" viewerName={me.name} />
+        ) : (
+          <div className="grid lg:grid-cols-2 gap-5 items-start">
+            {assembly.streamUrl && <LiveStream streamUrl={assembly.streamUrl} />}
+            <LiveChat
+              assemblyId={assemblyId}
+              viewerRole="SHAREHOLDER"
+              viewerName={me.name}
+              className={assembly.streamUrl ? "" : "lg:col-span-2"}
+            />
+          </div>
+        )}
 
         {/* Proxy management */}
         <Card>

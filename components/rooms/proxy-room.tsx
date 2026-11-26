@@ -11,6 +11,7 @@ import { STATUS_LABEL, CHOICE_LABEL, ASSEMBLY_TYPE_LABEL, formatDateAr, formatWe
 import LogoAvatar from "@/components/logo-avatar";
 import LiveStream from "@/components/live-stream";
 import LiveChat from "@/components/live-chat";
+import LiveBroadcast from "@/components/live-broadcast";
 import {
   Users, Check, X, Send, Clock, Lock, UserCheck, CheckCircle2, XCircle,
 } from "lucide-react";
@@ -184,15 +185,19 @@ export default function ProxyRoom({
         </div>
 
         {/* Live stream + broadcast chat */}
-        <div className="grid lg:grid-cols-2 gap-5 items-start">
-          {assembly.streamUrl && <LiveStream streamUrl={assembly.streamUrl} />}
-          <LiveChat
-            assemblyId={assemblyId}
-            viewerRole="PROXY"
-            viewerName={state.viewer?.name || ""}
-            className={assembly.streamUrl ? "" : "lg:col-span-2"}
-          />
-        </div>
+        {assembly.internalLive ? (
+          <LiveBroadcast assemblyId={assemblyId} viewerRole="PROXY" viewerName={state.viewer?.name || ""} />
+        ) : (
+          <div className="grid lg:grid-cols-2 gap-5 items-start">
+            {assembly.streamUrl && <LiveStream streamUrl={assembly.streamUrl} />}
+            <LiveChat
+              assemblyId={assemblyId}
+              viewerRole="PROXY"
+              viewerName={state.viewer?.name || ""}
+              className={assembly.streamUrl ? "" : "lg:col-span-2"}
+            />
+          </div>
+        )}
 
         {/* Agenda */}
         <div>

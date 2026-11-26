@@ -65,7 +65,7 @@ export async function PATCH(req: NextRequest) {
   if (!session || !isStaff(session.role)) {
     return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
   }
-  const { assemblyId, status, streamUrl } = await req.json();
+  const { assemblyId, status, streamUrl, internalLive } = await req.json();
   const assembly = await prisma.assembly.findUnique({ where: { id: assemblyId } });
   if (!assembly) {
     return NextResponse.json({ error: "الجمعية غير موجودة" }, { status: 404 });
@@ -76,13 +76,14 @@ export async function PATCH(req: NextRequest) {
   const data: Record<string, unknown> = {};
   if (status) data.status = status;
   if (streamUrl !== undefined) data.streamUrl = streamUrl || null;
+  if (internalLive !== undefined) data.internalLive = !!internalLive;
   const updated = await prisma.assembly.update({ where: { id: assemblyId }, data });
   await logAudit(
     updated.id,
     session.name,
     session.role,
-    "تحديث حالة الجمعية",
-    `الحالة الجديدة: ${updated.status}`
+    internalLive !== undefined && internalLive ? "تفعيل البث الداخلي" : "تحديث حالة الجمعية",
+    `الحالة الجديدة: ${updated.status}${internalLive !== undefined ? ` — البث الداخلي: ${updated.internalLive ? "مفعّل" : "معطّل"}` : ""}`
   );
   return NextResponse.json({ ok: true });
 }
