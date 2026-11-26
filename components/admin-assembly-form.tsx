@@ -95,7 +95,7 @@ export default function AdminAssemblyForm({ companies }: { companies: CompanyOpt
             </div>
             <div>
               <Label>رابط البث (اختياري)</Label>
-              <Input name="streamUrl" dir="ltr" placeholder="https://..." />
+              <Input name="streamUrl" dir="ltr" placeholder="يوتيوب / زوم / تيمز / أي رابط بث" />
             </div>
             <div className="md:col-span-3 flex justify-end">
               <Button type="submit" disabled={busy} className="bg-emerald-600 hover:bg-emerald-700">

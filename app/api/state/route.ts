@@ -179,14 +179,14 @@ export async function GET(req: NextRequest) {
     }));
     return NextResponse.json({
       ...base,
-      viewer: { role: "PROXY", principals, totalShares: principals.reduce((a, p) => a + p.sharesCount, 0) },
+      viewer: { role: "PROXY", name: session.name, principals, totalShares: principals.reduce((a, p) => a + p.sharesCount, 0) },
     });
   }
 
   if (isStaff(session.role)) {
     return NextResponse.json({
       ...base,
-      viewer: { role: session!.role },
+      viewer: { role: session!.role, name: session!.name },
       shareholders: assembly.shareholders
         .map((s) => ({
           id: s.id,

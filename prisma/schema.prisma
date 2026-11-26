@@ -33,6 +33,7 @@ model Assembly {
   shareholders     Shareholder[]
   proxies          Proxy[]
   auditLogs        AuditLog[]
+  chatMessages     ChatMessage[]
   createdAt        DateTime    @default(now())
 }
 
@@ -155,4 +156,18 @@ model User {
 model Setting {
   key   String @id
   value String
+}
+
+// دردشة الاستفسارات داخل البث المباشر للجمعية
+model ChatMessage {
+  id          String   @id @default(cuid())
+  assemblyId  String
+  assembly    Assembly @relation(fields: [assemblyId], references: [id], onDelete: Cascade)
+  senderName  String
+  senderRole  String   // SHAREHOLDER | PROXY | SECRETARY | SECRETARY_GENERAL | PLATFORM_MANAGER
+  message     String
+  isStaffReply Boolean @default(false) // رد فريق العمل على استفسار المساهم
+  createdAt   DateTime @default(now())
+
+  @@index([assemblyId, createdAt])
 }

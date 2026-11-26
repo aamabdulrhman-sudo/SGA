@@ -9,8 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { STATUS_LABEL, CHOICE_LABEL, ASSEMBLY_TYPE_LABEL, formatDateAr, formatWeight } from "@/lib/utils";
 import LogoAvatar from "@/components/logo-avatar";
+import LiveStream from "@/components/live-stream";
+import LiveChat from "@/components/live-chat";
 import {
-  MonitorPlay, Users, Check, X, Send, Clock, Lock, UserCheck, CheckCircle2, XCircle,
+  Users, Check, X, Send, Clock, Lock, UserCheck, CheckCircle2, XCircle,
 } from "lucide-react";
 
 export default function ProxyRoom({
@@ -181,21 +183,16 @@ export default function ProxyRoom({
           <QuorumMeter {...quorum} threshold={assembly.quorumPercentage} />
         </div>
 
-        {assembly.streamUrl && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <MonitorPlay className="h-5 w-5 text-emerald-600" />
-                البث المباشر للجمعية
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="aspect-video rounded-lg overflow-hidden bg-black">
-                <iframe src={assembly.streamUrl} className="w-full h-full" allowFullScreen title="بث الجمعية" />
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {/* Live stream + broadcast chat */}
+        <div className="grid lg:grid-cols-2 gap-5 items-start">
+          {assembly.streamUrl && <LiveStream streamUrl={assembly.streamUrl} />}
+          <LiveChat
+            assemblyId={assemblyId}
+            viewerRole="PROXY"
+            viewerName={state.viewer?.name || ""}
+            className={assembly.streamUrl ? "" : "lg:col-span-2"}
+          />
+        </div>
 
         {/* Agenda */}
         <div>

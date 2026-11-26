@@ -14,15 +14,18 @@ import {
 } from "@/components/ui/table";
 import { STATUS_LABEL, CHOICE_LABEL, ASSEMBLY_TYPE_LABEL, formatDateAr, formatWeight, ROLE_LABEL } from "@/lib/utils";
 import LogoAvatar from "@/components/logo-avatar";
+import LiveStream from "@/components/live-stream";
+import LiveChat from "@/components/live-chat";
 import {
   Gauge, Radio, PlayCircle, Lock, Upload, FileSpreadsheet, Printer, History,
   CheckCircle2, XCircle, Clock, Download, Activity, Users, FileText, Building,
-  RefreshCw, ArrowRight, Scale,
+  RefreshCw, ArrowRight, Scale, MessageSquare,
 } from "lucide-react";
 
 const TABS = [
   { key: "overview", label: "غرفة التحكم", icon: Gauge },
   { key: "agenda", label: "بنود التصويت", icon: FileText },
+  { key: "chat", label: "دردشة الاستفسارات", icon: MessageSquare },
   { key: "proxies", label: "اعتماد التوكيلات", icon: History },
   { key: "shareholders", label: "سجل المساهمين", icon: Users },
   { key: "audit", label: "سجل التدقيق", icon: Activity },
@@ -223,12 +226,14 @@ export default function SecretaryRoom({
                   <Building className="h-5 w-5 text-emerald-600" />
                   إعدادات البث المباشر
                 </CardTitle>
-                <CardDescription>رابط التضمين (iframe) لمنصة YouTube / Zoom / Teams</CardDescription>
+                <CardDescription>
+                  الصق أي رابط — يوتيوب أو زوم أو مايكروسوفت تيمز أو أي رابط بث — ويُعرض تلقائياً بالصيغة المناسبة
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <Input
                   dir="ltr"
-                  placeholder="https://www.youtube.com/embed/..."
+                  placeholder="https://youtube.com/watch?v=... أو https://zoom.us/j/... أو https://teams.live.com/meet/..."
                   value={currentStream}
                   onChange={(e) => setStreamUrl(e.target.value)}
                 />
@@ -239,13 +244,19 @@ export default function SecretaryRoom({
                 >
                   حفظ رابط البث
                 </Button>
-                {assembly.streamUrl && (
-                  <div className="aspect-video rounded-lg overflow-hidden bg-black">
-                    <iframe src={assembly.streamUrl} className="w-full h-full" allowFullScreen title="بث الجمعية" />
-                  </div>
-                )}
+                {assembly.streamUrl && <LiveStream streamUrl={assembly.streamUrl} />}
               </CardContent>
             </Card>
+
+            {/* دردشة استفسارات المساهمين داخل البث */}
+            <div className="lg:col-span-2">
+              <LiveChat
+                assemblyId={assemblyId}
+                viewerRole={state.viewer?.role || "SECRETARY"}
+                viewerName={state.viewer?.name || ""}
+                title="دردشة البث — استفسارات المساهمين وردود أمين السر"
+              />
+            </div>
 
             {/* Live snapshot of open items */}
             {agenda.filter((i: any) => i.status === "OPEN" || i.status === "CLOSED").map((item: any) => (
@@ -290,6 +301,27 @@ export default function SecretaryRoom({
                 </CardContent>
               </Card>
             ))}
+          </div>
+        )}
+
+        {tab === "chat" && (
+          <div className="grid lg:grid-cols-2 gap-5">
+            <LiveChat
+              assemblyId={assemblyId}
+              viewerRole={state.viewer?.role || "SECRETARY"}
+              viewerName={state.viewer?.name || ""}
+              title="دردشة البث — استفسارات المساهمين وردود أمين السر"
+              className="h-[70vh]"
+            />
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-900 leading-6 space-y-2 h-fit">
+              <div className="font-extrabold flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" /> إرشادات دردشة الاستفسارات
+              </div>
+              <p>• كل استفسار يرسله المساهم أو المفوض يظهر هنا لحظياً مع اسمه ودوره.</p>
+              <p>• ردودك تظهر مميزة بلون أخضر مع شعار فريق العمل لدى جميع الحضور.</p>
+              <p>• الدردشة مرتبطة بجمعية واحدة ولا ترى الحضور إلا رسائل جمعيتهم.</p>
+              <p>• يمكن للحضور متابعة التصويت والبث والدردشة من نفس الصفحة أثناء الاجتماع.</p>
+            </div>
           </div>
         )}
 

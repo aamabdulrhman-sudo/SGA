@@ -11,8 +11,10 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Dialog } from "@/components/ui/dialog";
 import { STATUS_LABEL, CHOICE_LABEL, ASSEMBLY_TYPE_LABEL, formatDateAr, formatWeight } from "@/lib/utils";
 import LogoAvatar from "@/components/logo-avatar";
+import LiveStream from "@/components/live-stream";
+import LiveChat from "@/components/live-chat";
 import {
-  MonitorPlay, BadgeCheck, Lock, Send, UserPlus, Trash2, FileText, CheckCircle2,
+  BadgeCheck, Lock, Send, UserPlus, Trash2, FileText, CheckCircle2,
   XCircle, Clock, Users, Upload, Check, X,
 } from "lucide-react";
 
@@ -188,28 +190,16 @@ export default function ShareholderRoom({
           <QuorumMeter {...quorum} threshold={assembly.quorumPercentage} />
         </div>
 
-        {/* Live stream */}
-        {assembly.streamUrl && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <MonitorPlay className="h-5 w-5 text-emerald-600" />
-                البث المباشر للجمعية
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="aspect-video rounded-lg overflow-hidden bg-black">
-                <iframe
-                  src={assembly.streamUrl}
-                  className="w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  title="بث الجمعية العامة"
-                />
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {/* Live stream + broadcast chat */}
+        <div className="grid lg:grid-cols-2 gap-5 items-start">
+          {assembly.streamUrl && <LiveStream streamUrl={assembly.streamUrl} />}
+          <LiveChat
+            assemblyId={assemblyId}
+            viewerRole="SHAREHOLDER"
+            viewerName={me.name}
+            className={assembly.streamUrl ? "" : "lg:col-span-2"}
+          />
+        </div>
 
         {/* Proxy management */}
         <Card>
